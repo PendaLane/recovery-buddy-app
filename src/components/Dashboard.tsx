@@ -1,0 +1,134 @@
+import React, { useState, useEffect } from 'react';
+import { JournalEntry } from '../types';
+import { Award, TrendingUp, ShieldCheck } from 'lucide-react';
+import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+
+interface DashboardProps {
+  sobrietyDate: string | null;
+  setSobrietyDate: (date: string | null) => void;
+  journals: JournalEntry[];
+  streakCount: number;
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({ sobrietyDate, setSobrietyDate, journals, streakCount }) => {
+  const [daysSober, setDaysSober] = useState(0);
+
+  useEffect(() => {
+    if (sobrietyDate) {
+      const start = new Date(sobrietyDate);
+      const now = new Date();
+      const diff = now.getTime() - start.getTime();
+      setDaysSober(Math.floor(diff / (1000 * 60 * 60 * 24)));
+    } else {
+      setDaysSober(0);
+    }
+  }, [sobrietyDate]);
+
+  // Transform journal data for chart
+  const chartData = journals.slice(-7).map(j => {
+    let score = 3;
+    if (j.mood === 'Great') score = 5;
+    if (j.mood === 'Good') score = 4;
+    if (j.mood === 'Okay') score = 3;
+    if (j.mood === 'Struggling') score = 2;
+    if (j.mood === 'Crisis') score = 1;
+    return {
+      date: new Date(j.date).toLocaleDateString(undefined, { weekday: 'short' }),
+      score: score
+    };
+  }).reverse();
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <header className="mb-4">
+        <h2 className="text-2xl font-bold text-penda-purple">Welcome Back</h2>
+        <p className="text-penda-light text-sm">Meetings. Sponsors. Support. In your pocket.</p>
+      </header>
+
+      {/* Sobriety Counter Card */}
+      <div className="bg-gradient-to-r from-penda-purple to-penda-light rounded-soft p-6 text-white shadow-lg relative overflow-hidden border border-penda-purple">
+        <div className="absolute top-0 right-0 p-8 opacity-10">
+            <Award size={120} />
+        </div>
+        
+        {!sobrietyDate ? (
+          <div className="z-10 relative">
+            <h3 className="text-lg font-bold mb-2">Sobriety Counter</h3>
+            <div className="bg-penda-bg/20 p-3 rounded-firm border border-white/20 mb-3 text-sm">
+              Log in or create a free account to save your sobriety date securely.
+            </div>
+            <label className="block text-xs uppercase tracking-wide opacity-80 mb-1">Clean/Sober Date</label>
+            <input 
+              type="date" 
+              className="w-full p-2 rounded-firm text-penda-purple font-bold"
+              onChange={(e) => setSobrietyDate(e.target.value)}
+            />
+          </div>
+        ) : (
+          <div className="z-10 relative text-center py-2">
+            <div className="text-white/80 font-medium tracking-wider uppercase text-xs mb-1">Sobriety Streak</div>
+            <div className="text-5xl font-extrabold mb-1">{daysSober}</div>
+            <div className="text-lg text-white/90">Days Clean & Sober</div>
+            <div className="mt-4 flex gap-2 justify-center">
+               <button 
+                onClick={() => setSobrietyDate(null)} 
+                className="text-xs text-white/70 hover:text-white underline"
+              >
+                Reset Date
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Mood Trend */}
+        <div className="bg-white p-5 rounded-soft shadow-sm border border-penda-border">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="text-penda-purple" size={20} />
+            <h3 className="font-bold text-penda-purple">Mood History</h3>
+          </div>
+          <div className="h-40 w-full">
+            {chartData.length > 1 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#7A0050" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#7A0050" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5cfe0' }} />
+                  <Area type="monotone" dataKey="score" stroke="#7A0050" fillOpacity={1} fill="url(#colorScore)" strokeWidth={2} />
+                  <XAxis dataKey="date" hide />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-penda-light text-sm italic">
+                Log more journal entries to see trends.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="bg-white p-5 rounded-soft shadow-sm border border-penda-border">
+          <div className="flex items-center gap-2 mb-4">
+            <ShieldCheck className="text-penda-purple" size={20} />
+            <h3 className="font-bold text-penda-purple">Your Stats</h3>
+          </div>
+          <div className="space-y-3">
+             <div className="flex items-center justify-between p-3 bg-penda-bg rounded-firm border border-penda-border">
+                <span className="text-penda-text text-sm">Current Check-in Streak</span>
+                <span className="font-bold text-penda-purple">{streakCount} Days</span>
+             </div>
+             <div className="flex items-center justify-between p-3 bg-penda-bg rounded-firm border border-penda-border">
+                <span className="text-penda-text text-sm">Total Journal Entries</span>
+                <span className="font-bold text-penda-purple">{journals.length}</span>
+             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
