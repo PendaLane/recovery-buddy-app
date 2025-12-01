@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cream: #FFF8EC;
+  --purple: #7A0050;
+  --purple-light: #b33a89;
+  --purple-bg: #f8e6f2;
+  --text: #2d1b27;
+  --border: #e5cfe0;
+}
+
+body {
+  background-color: var(--cream);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e5cfe0; border-radius: 3px; }
