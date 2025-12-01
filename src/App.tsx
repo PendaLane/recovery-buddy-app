@@ -3,56 +3,20 @@ import {
   LayoutDashboard, BookHeart, BotMessageSquare, MapPin, Phone, 
   AlertCircle, FileText, Award, BookOpen, UserCog, LogOut, 
   TrendingUp, ShieldCheck, Send, Bot, Loader2, Sparkles, Save, 
-  Plus, Trash2, User, Mail, Siren, CheckCircle, ExternalLink,
-  Share2, Camera, Menu, X, Flame
+  Plus, Trash2, User, Mail, List, Siren, CheckCircle, ExternalLink,
+  Share2, Camera, Menu, X, Flame, LogIn
 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import { GoogleGenAI } from '@google/genai';
+import { getCurrentUser, loadState, saveState, WPState, subscribeToJournals } from '../services/backend';
+import { View, JournalEntry, MeetingLog, Contact, StepWork, Badge, Streak, UserProfile } from '../types';
+import { StepWorkComponent } from './components/StepWork';
+import { Readings } from './components/Readings';
+import { Badges } from './components/Badges';
+import { MeetingFinder } from './components/MeetingFinder';
 
 // --- CONFIGURATION ---
 const GEMINI_API_KEY = process.env.API_KEY || "";
-
-// --- TYPES ---
-type View = 'DASHBOARD' | 'MEETINGS' | 'AI_COACH' | 'JOURNAL' | 'STEPWORK' | 'BADGES' | 'READINGS' | 'CONTACTS' | 'HELP';
-
-interface JournalEntry {
-  id: string;
-  date: string;
-  mood: string;
-  text: string;
-  aiReflection?: string;
-}
-
-interface Contact {
-  id: string;
-  name: string;
-  role: string;
-  phone: string;
-  fellowship: string;
-}
-
-interface StepWorkItem {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  step: string;
-  plan: string;
-}
-
-interface MeetingLog {
-  id: string;
-  ts: string;
-  type: 'Check-In' | 'Check-Out';
-  location?: string;
-}
-
-interface Badge {
-  id: string;
-  key: string;
-  label: string;
-  earnedAt: string;
-}
 
 // --- AI SERVICE ---
 let aiClient: GoogleGenAI | null = null;
@@ -92,46 +56,99 @@ const analyzeJournalEntry = async (text: string, mood: string) => {
 
 // --- MAIN APP COMPONENT ---
 function App() {
-  const [view, setView] = useState<View>('DASHBOARD');
+  const [view, setView] = useState<View>(View.DASHBOARD);
   const [mobile, setMobile] = useState(window.innerWidth < 768);
   const [menuOpen, setMenuOpen] = useState(false);
   
   // -- STATE MANAGEMENT --
-  const [sobrietyDate, setSobrietyDate] = useState(localStorage.getItem('mrb_date') || '');
-  const [journals, setJournals] = useState<JournalEntry[]>(JSON.parse(localStorage.getItem('mrb_journals') || '[]'));
-  const [contacts, setContacts] = useState<Contact[]>(JSON.parse(localStorage.getItem('mrb_contacts') || '[]'));
-  const [stepwork, setStepwork] = useState<StepWorkItem[]>(JSON.parse(localStorage.getItem('mrb_stepwork') || '[]'));
-  const [logs, setLogs] = useState<MeetingLog[]>(JSON.parse(localStorage.getItem('mrb_logs') || '[]'));
-  const [badges, setBadges] = useState<Badge[]>(JSON.parse(localStorage.getItem('mrb_badges') || '[]'));
-  const [streak, setStreak] = useState(parseInt(localStorage.getItem('mrb_streak') || '0'));
-  const [lastCheckIn, setLastCheckIn] = useState(localStorage.getItem('mrb_last_checkin') || '');
-  const [profilePhoto, setProfilePhoto] = useState(localStorage.getItem('mrb_photo') || "https://secure.gravatar.com/avatar/?s=96&d=mm&r=g");
-  const [userName, setUserName] = useState(localStorage.getItem('mrb_username') || "Recovery Buddy");
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // -- PERSISTENCE --
+  const [sobrietyDate, setSobrietyDate] = useState(localStorage.getItem('mrb_date') || '');
+  const [journals, setJournals] = useState<JournalEntry[]>([]); // Synced via Backend/Firebase
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [stepwork, setStepwork] = useState<StepWork[]>([]);
+  const [logs, setLogs] = useState<MeetingLog[]>([]);
+  const [badges, setBadges] = useState<Badge[]>([]);
+  const [streak, setStreak] = useState<Streak>({ current: 0, longest: 0, lastCheckInDate: null });
+  const [journalCount, setJournalCount] = useState(0);
+  
+  // Profile Photo & Name (Local overrides or WP defaults)
+  const [profilePhoto, setProfilePhoto] = useState(localStorage.getItem('mrb_photo') || "https://secure.gravatar.com/avatar/?s=96&d=mm&r=g");
+  const [userName, setUserName] = useState("Recovery Buddy"); // Will update on login
+
+  // -- INITIALIZATION --
   useEffect(() => {
+    const init = async () => {
+      // 1. Get User
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+
+      // FIX: If logged in, force update the username display to match WP
+      if (currentUser.isLoggedIn && currentUser.displayName) {
+        setUserName(currentUser.displayName);
+        // Also use WP avatar if we haven't manually overridden it locally yet
+        if (!localStorage.getItem('mrb_photo')) {
+            setProfilePhoto(currentUser.avatar);
+        }
+      } else {
+        // Guest mode fallback
+        setUserName(localStorage.getItem('mrb_username') || "Recovery Buddy");
+      }
+
+      // 2. Load State (WP or Local)
+      const state = await loadState(currentUser.isLoggedIn);
+      if (state) {
+        setSobrietyDate(state.sobrietyDate || localStorage.getItem('mrb_date') || '');
+        setLogs(state.logs || []);
+        setContacts(state.contacts || []);
+        setStepwork(state.sponsors || []);
+        setBadges(state.badges || []);
+        setStreak(state.streak || { current: 0, longest: 0, lastCheckInDate: null });
+        setJournalCount(state.journalCount || 0);
+      }
+      setIsLoading(false);
+    };
+
+    init();
+    
     const handleResize = () => setMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => localStorage.setItem('mrb_date', sobrietyDate), [sobrietyDate]);
-  useEffect(() => localStorage.setItem('mrb_journals', JSON.stringify(journals)), [journals]);
-  useEffect(() => localStorage.setItem('mrb_contacts', JSON.stringify(contacts)), [contacts]);
-  useEffect(() => localStorage.setItem('mrb_stepwork', JSON.stringify(stepwork)), [stepwork]);
-  useEffect(() => localStorage.setItem('mrb_logs', JSON.stringify(logs)), [logs]);
-  useEffect(() => localStorage.setItem('mrb_badges', JSON.stringify(badges)), [badges]);
-  useEffect(() => localStorage.setItem('mrb_streak', streak.toString()), [streak]);
-  useEffect(() => localStorage.setItem('mrb_last_checkin', lastCheckIn), [lastCheckIn]);
-  useEffect(() => localStorage.setItem('mrb_photo', profilePhoto), [profilePhoto]);
-  useEffect(() => localStorage.setItem('mrb_username', userName), [userName]);
+  // -- PERSISTENCE --
+  // Sync Journals from Firebase separately
+  useEffect(() => {
+    if (!user) return;
+    const unsubscribe = subscribeToJournals(user, (entries) => {
+        setJournals(entries);
+    });
+    return () => unsubscribe();
+  }, [user]);
 
-  // -- CALCULATIONS & LOGIC --
+  // Save other state to WP/Local
+  useEffect(() => {
+    if (isLoading || !user) return;
+    const currentState: WPState = {
+        logs, contacts, sponsors: stepwork, sobrietyDate, badges, streak, journalCount, chatCount: 0
+    };
+    saveState(currentState, user.isLoggedIn);
+    
+    // Also keep local backups of strictly local prefs
+    localStorage.setItem('mrb_date', sobrietyDate);
+    localStorage.setItem('mrb_photo', profilePhoto);
+    localStorage.setItem('mrb_username', userName);
+  }, [logs, contacts, stepwork, sobrietyDate, badges, streak, journalCount, user, isLoading, profilePhoto, userName]);
+
+
+  // -- LOGIC --
   const daysSober = sobrietyDate ? Math.floor((new Date().getTime() - new Date(sobrietyDate).getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
   const awardBadge = (key: string, label: string) => {
     if (!badges.find(b => b.key === key)) {
-      setBadges([...badges, { id: Date.now().toString(), key, label, earnedAt: new Date().toISOString() }]);
+      const newBadge = { id: Date.now().toString(), key, label, earnedAt: new Date().toISOString(), icon: '🏅' };
+      setBadges([...badges, newBadge]);
       alert(`🎉 You earned a badge: ${label}`);
     }
   };
@@ -155,24 +172,24 @@ function App() {
 
   const completeCheckIn = (location: string) => {
     const today = new Date().toISOString().slice(0, 10);
-    let newStreak = streak;
+    let newStreakCount = streak.current;
     
-    if (lastCheckIn !== today) {
-      if (lastCheckIn) {
-        const diff = Math.floor((new Date(today).getTime() - new Date(lastCheckIn).getTime()) / (1000 * 60 * 60 * 24));
-        newStreak = diff === 1 ? streak + 1 : 1;
+    if (streak.lastCheckInDate !== today) {
+      if (streak.lastCheckInDate) {
+        const diff = Math.floor((new Date(today).getTime() - new Date(streak.lastCheckInDate).getTime()) / (1000 * 60 * 60 * 24));
+        newStreakCount = diff === 1 ? streak.current + 1 : 1;
       } else {
-        newStreak = 1;
+        newStreakCount = 1;
       }
-      setStreak(newStreak);
-      setLastCheckIn(today);
+      setStreak({ current: newStreakCount, longest: Math.max(newStreakCount, streak.longest), lastCheckInDate: today });
     }
 
-    setLogs([{ id: Date.now().toString(), ts: new Date().toISOString(), type: 'Check-In', location }, ...logs]);
+    setLogs([{ id: Date.now().toString(), timestamp: new Date().toISOString(), type: 'Check-In', location }, ...logs]);
     
-    if (logs.length === 0) awardBadge('first_mtg', 'First Meeting');
-    if (newStreak === 7) awardBadge('streak_7', '7 Day Streak');
-    if (newStreak === 30) awardBadge('streak_30', '30 Day Streak');
+    const count = logs.filter(l => l.type === 'Check-In').length + 1;
+    if (count === 1) awardBadge('first_mtg', 'First Meeting');
+    if (newStreakCount === 7) awardBadge('streak_7', '7 Day Streak');
+    if (newStreakCount === 30) awardBadge('streak_30', '30 Day Streak');
     alert("Checked In! " + location);
   }
 
@@ -201,20 +218,22 @@ function App() {
   };
 
   const menuItems = [
-    { id: 'DASHBOARD', icon: LayoutDashboard, label: 'Dashboard' },
-    { id: 'MEETINGS', icon: MapPin, label: 'Meeting Finder' },
-    { id: 'AI_COACH', icon: BotMessageSquare, label: 'AI Companion' },
-    { id: 'JOURNAL', icon: BookHeart, label: 'Journal' },
-    { id: 'STEPWORK', icon: FileText, label: 'My Stepwork' },
-    { id: 'BADGES', icon: Award, label: 'Badges' },
-    { id: 'READINGS', icon: BookOpen, label: 'Readings' },
-    { id: 'CONTACTS', icon: Phone, label: 'Phone Book' },
+    { id: View.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
+    { id: View.MEETINGS, icon: MapPin, label: 'Meeting Finder' },
+    { id: View.AI_COACH, icon: BotMessageSquare, label: 'AI Companion' },
+    { id: View.JOURNAL, icon: BookHeart, label: 'Journal' },
+    { id: View.STEPWORK, icon: FileText, label: 'My Stepwork' },
+    { id: View.BADGES, icon: Award, label: 'Badges' },
+    { id: View.READINGS, icon: BookOpen, label: 'Readings' },
+    { id: View.CONTACTS, icon: Phone, label: 'Phone Book' },
   ];
 
-  const handleNav = (id: string) => {
-    setView(id as View);
+  const handleNav = (id: View) => {
+    setView(id);
     setMenuOpen(false);
   }
+
+  if (isLoading) return <div className="h-screen flex items-center justify-center bg-penda-cream text-penda-purple"><Loader2 className="animate-spin mr-2"/> Loading your recovery space...</div>;
 
   const Sidebar = () => (
     <nav className="w-64 bg-[#f8e6f2] border-r border-[#e5cfe0] flex flex-col p-4 h-full shrink-0 overflow-y-auto">
@@ -228,13 +247,14 @@ function App() {
                   <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
                 </label>
              </div>
+             {/* Editable username locally, but relies on WP sync primarily */}
              <input value={userName} onChange={e => setUserName(e.target.value)} className="text-center font-bold text-[#7A0050] w-full bg-transparent outline-none focus:bg-[#f8e6f2] rounded px-1" />
              
              {/* STATS ROW */}
              <div className="flex justify-center gap-3 mt-2 text-xs text-[#2d1b27]">
                 <div className="flex items-center gap-1 bg-[#f8e6f2] px-2 py-1 rounded-full border border-[#e5cfe0]">
                     <Flame size={12} className="text-orange-500" /> 
-                    <span className="font-bold">{streak}</span>
+                    <span className="font-bold">{streak.current}</span>
                 </div>
                 <div className="flex items-center gap-1 bg-[#f8e6f2] px-2 py-1 rounded-full border border-[#e5cfe0]">
                     <Award size={12} className="text-yellow-600" />
@@ -246,10 +266,11 @@ function App() {
           <img 
             src="https://pendalane.com/wp-content/uploads/2024/04/cropped-Penda-Lane-Behavioral-Health-Logo.png" 
             alt="Penda Lane" 
-            className="w-16 h-16 mx-auto mb-2 rounded-full object-cover mix-blend-multiply"
+            className="w-24 h-24 mx-auto mb-2 rounded-full object-cover mix-blend-multiply aspect-square"
           />
-          <h1 className="font-bold text-[#7A0050] text-lg leading-tight">My Recovery Buddy</h1>
-          <p className="text-[10px] text-[#2d1b27] uppercase tracking-wide mt-1 font-semibold">By Penda Lane</p>
+          <h1 className="font-bold text-[#7A0050] text-xl leading-tight mt-2">My Recovery Buddy</h1>
+          <p className="text-[10px] text-[#2d1b27] uppercase tracking-wide mt-1 font-bold">By Penda Lane Behavioral Health</p>
+          <p className="text-[10px] text-[#b33a89] italic mt-1 border-t border-[#e5cfe0] pt-2">"Meetings. Sponsors. Support. In your pocket."</p>
         </div>
       
       {menuItems.map(i => (
@@ -265,7 +286,7 @@ function App() {
         <a href="https://pendalane.com/membership-account/" className="flex items-center gap-3 p-3 text-sm text-[#7A0050] hover:bg-white rounded-lg">
             <UserCog size={20} /> My Membership
         </a>
-        <button onClick={() => handleNav('HELP')} className="flex items-center gap-3 p-3 text-sm text-red-600 hover:bg-red-50 rounded-lg whitespace-nowrap font-medium">
+        <button onClick={() => handleNav(View.HELP)} className="flex items-center gap-3 p-3 text-sm text-red-600 hover:bg-red-50 rounded-lg whitespace-nowrap font-medium">
             <AlertCircle size={20} /> Help & Crisis
         </button>
       </div>
@@ -280,47 +301,29 @@ function App() {
         {/* MOBILE HEADER */}
         {mobile && (
           <div className="sticky top-0 z-40 bg-[#FFF8EC] border-b border-[#e5cfe0] shadow-sm">
-             <div className="flex items-center justify-between p-4">
-                {/* Branding Left */}
-                <div className="flex items-center gap-3">
+             <div className="flex items-center justify-between p-3">
+                {/* Branding Left - Stacked */}
+                <div className="flex items-center gap-3 flex-1">
                     <img 
                         src="https://pendalane.com/wp-content/uploads/2024/04/cropped-Penda-Lane-Behavioral-Health-Logo.png" 
                         alt="Logo" 
-                        className="w-10 h-10 rounded-full object-cover mix-blend-multiply border border-[#e5cfe0]"
+                        className="w-12 h-12 rounded-full object-cover mix-blend-multiply border border-[#e5cfe0] aspect-square flex-shrink-0"
                     />
-                    <div className="flex flex-col">
-                        <span className="font-bold text-[#7A0050] text-sm leading-tight">Recovery Buddy</span>
-                        <span className="text-[10px] text-[#b33a89]">Penda Lane</span>
+                    <div className="flex flex-col leading-tight min-w-0">
+                        <span className="font-bold text-[#7A0050] text-sm truncate">My Recovery Buddy</span>
+                        <span className="text-[9px] text-[#2d1b27] uppercase font-bold truncate">By Penda Lane Behavioral Health</span>
+                        <span className="text-[8px] text-[#b33a89] italic truncate">"Meetings. Sponsors. Support. In your pocket."</span>
                     </div>
                 </div>
 
                 {/* Right Profile & Menu */}
-                <div className="flex items-center gap-4">
-                    {/* User Stats / Profile */}
-                    <div className="flex items-center gap-3">
-                        <div className="flex flex-col items-end">
-                            <span className="text-xs font-bold text-[#7A0050]">{userName}</span>
-                            <div className="flex gap-2 text-[10px]">
-                                <span className="flex items-center gap-0.5 text-orange-600"><Flame size={10} fill="currentColor" /> {streak}</span>
-                                <span className="flex items-center gap-0.5 text-yellow-600"><Award size={10} fill="currentColor" /> {badges.length}</span>
-                            </div>
-                        </div>
-                        <div className="relative">
-                            <img 
-                                src={profilePhoto} 
-                                className="w-10 h-10 rounded-full border-2 border-[#7A0050] object-cover" 
-                                onClick={() => document.getElementById('mob-photo')?.click()}
-                            />
-                            <input type="file" id="mob-photo" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
-                        </div>
-                    </div>
-
+                <div className="flex items-center gap-3 ml-2 flex-shrink-0">
                     {/* Hamburger Button */}
                     <button 
                         onClick={() => setMenuOpen(!menuOpen)} 
-                        className="p-2 bg-white rounded-lg border border-[#e5cfe0] text-[#7A0050]"
+                        className="p-2 bg-white rounded-lg border border-[#e5cfe0] text-[#7A0050] hover:bg-[#f8e6f2]"
                     >
-                        {menuOpen ? <X size={24} /> : <Menu size={24} />}
+                        {menuOpen ? <X size={22} /> : <Menu size={22} />}
                     </button>
                 </div>
              </div>
@@ -328,20 +331,41 @@ function App() {
              {/* MOBILE DROPDOWN MENU */}
              {menuOpen && (
                  <div className="absolute top-full left-0 w-full bg-white border-b border-[#e5cfe0] shadow-xl rounded-b-2xl p-4 flex flex-col gap-2 z-50 animate-in slide-in-from-top-2">
+                    {/* User Profile Card Mobile Menu */}
+                    <div className="bg-[#f8e6f2] p-4 rounded-xl flex items-center gap-3 mb-2">
+                        <img src={profilePhoto} className="w-12 h-12 rounded-full border-2 border-[#7A0050] object-cover" />
+                        <div>
+                            <div className="font-bold text-[#7A0050]">{userName}</div>
+                            <div className="flex gap-2 text-xs mt-1">
+                                <span className="flex items-center gap-1"><Flame size={12} className="text-orange-500"/> {streak.current}</span>
+                                <span className="flex items-center gap-1"><Award size={12} className="text-yellow-600"/> {badges.length}</span>
+                            </div>
+                        </div>
+                    </div>
+
                     {menuItems.map(i => (
                         <button 
                             key={i.id} 
                             onClick={() => handleNav(i.id)} 
-                            className={`flex items-center gap-4 p-4 rounded-xl text-sm font-medium transition-all ${view === i.id ? 'bg-[#7A0050] text-white' : 'bg-[#f8e6f2] text-[#7A0050]'}`}
+                            className={`flex items-center gap-4 p-3 rounded-xl text-sm font-medium transition-all ${view === i.id ? 'bg-[#7A0050] text-white' : 'bg-gray-50 text-[#7A0050]'}`}
                         >
                             <i.icon size={20} /> {i.label}
                         </button>
                     ))}
                     <div className="h-px bg-[#e5cfe0] my-2"></div>
-                    <a href="https://pendalane.com/membership-account/" className="flex items-center gap-4 p-4 rounded-xl text-sm font-medium bg-[#f8e6f2] text-[#7A0050]">
-                        <UserCog size={20} /> My Membership
-                    </a>
-                    <button onClick={() => handleNav('HELP')} className="flex items-center gap-4 p-4 rounded-xl text-sm font-medium bg-red-50 text-red-600 border border-red-100">
+                    <button onClick={shareApp} className="flex items-center gap-4 p-3 rounded-xl text-sm font-medium bg-white border border-[#e5cfe0] text-[#7A0050]">
+                        <Share2 size={20} /> Share App
+                    </button>
+                    {user?.isLoggedIn ? (
+                        <a href="/wp-login.php?action=logout&redirect_to=/" className="flex items-center gap-4 p-3 rounded-xl text-sm font-medium bg-white border border-[#e5cfe0] text-[#7A0050]">
+                            <LogOut size={20} /> Log Out
+                        </a>
+                    ) : (
+                        <a href="/login/" className="flex items-center gap-4 p-3 rounded-xl text-sm font-medium bg-white border border-[#e5cfe0] text-[#7A0050]">
+                            <LogIn size={20} /> Sign In
+                        </a>
+                    )}
+                    <button onClick={() => handleNav(View.HELP)} className="flex items-center gap-4 p-3 rounded-xl text-sm font-medium bg-red-50 text-red-600 border border-red-100">
                         <AlertCircle size={20} /> Help & Crisis
                     </button>
                  </div>
@@ -350,147 +374,16 @@ function App() {
         )}
 
         <div className="p-4 md:p-8 pb-24 max-w-5xl mx-auto">
-            {/* --- VIEWS --- */}
-
-            {view === 'DASHBOARD' && (
-            <div className="space-y-6 animate-in fade-in">
-                <div className="bg-gradient-to-r from-[#7A0050] to-[#b33a89] rounded-2xl p-6 text-white relative overflow-hidden shadow-lg">
-                <Award className="absolute right-0 top-0 opacity-10" size={150} />
-                <div className="relative z-10">
-                    <h2 className="text-xl font-bold">Welcome Back, {userName}</h2>
-                    <div className="mt-4 text-center">
-                        <div className="text-5xl font-bold mb-1">{Math.max(0, daysSober)}</div>
-                        <div className="text-sm opacity-90 uppercase tracking-wide">Days Sober</div>
-                        {!sobrietyDate ? (
-                            <div className="mt-4"><p className="text-sm mb-2">Set your date to start tracking:</p><input type="date" onChange={e => setSobrietyDate(e.target.value)} className="text-black p-2 rounded w-full max-w-xs" /></div>
-                        ) : (
-                            <button onClick={()=>setSobrietyDate('')} className="text-xs underline mt-4 opacity-70 hover:opacity-100">Reset Date</button>
-                        )}
-                    </div>
-                </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                    <div className="bg-white p-6 rounded-2xl border border-[#e5cfe0] shadow-sm">
-                        <h3 className="font-bold text-[#7A0050] mb-4 flex items-center gap-2"><TrendingUp size={18}/> Mood History</h3>
-                        <div className="h-48 w-full">
-                            {journals.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={journals.slice(0,7).reverse().map(j => ({ score: j.mood === 'Great' ? 5 : j.mood === 'Crisis' ? 1 : 3 }))}>
-                                        <Area type="monotone" dataKey="score" stroke="#7A0050" fill="#f8e6f2" strokeWidth={2} />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            ) : <p className="text-sm text-gray-400 italic text-center pt-10">Log entries to see trends</p>}
-                        </div>
-                    </div>
-                    <div className="bg-white p-6 rounded-2xl border border-[#e5cfe0] shadow-sm space-y-4">
-                        <h3 className="font-bold text-[#7A0050] mb-2 flex items-center gap-2"><ShieldCheck size={18}/> Stats</h3>
-                        <div className="flex justify-between p-3 bg-[#f8e6f2] rounded-xl border border-[#e5cfe0]"><span>Check-in Streak</span><b className="text-[#7A0050]">{streak} Days</b></div>
-                        <div className="flex justify-between p-3 bg-[#f8e6f2] rounded-xl border border-[#e5cfe0]"><span>Journal Entries</span><b className="text-[#7A0050]">{journals.length}</b></div>
-                        <div className="flex justify-between p-3 bg-[#f8e6f2] rounded-xl border border-[#e5cfe0]"><span>Meetings Logged</span><b className="text-[#7A0050]">{logs.filter(l=>l.type==='Check-In').length}</b></div>
-                    </div>
-                </div>
-            </div>
-            )}
-
-            {view === 'MEETINGS' && (
-                <div className="space-y-6">
-                    <h2 className="text-2xl font-bold text-[#7A0050]">Meeting Finder</h2>
-                    <div className="bg-white p-6 rounded-2xl border border-[#e5cfe0] shadow-sm space-y-4">
-                        <div className="relative">
-                            <MapPin className="absolute left-3 top-3.5 text-gray-400" size={18}/>
-                            <input id="loc" placeholder="City, Zip, or 'Near Me'" className="w-full p-3 pl-10 border border-[#e5cfe0] rounded-xl outline-none focus:border-[#7A0050]" />
-                        </div>
-                        <div className="flex gap-2">
-                            {['AA','NA','CA'].map(t => (
-                                <button key={t} onClick={() => {
-                                    const loc = (document.getElementById('loc') as HTMLInputElement).value || 'near me';
-                                    window.open(`https://google.com/maps/search/${t}+meeting+${loc}`, '_blank');
-                                }} className="flex-1 bg-[#7A0050] text-white py-2 rounded-xl text-sm hover:bg-[#b33a89] transition-colors">{t} Meetings</button>
-                            ))}
-                        </div>
-                        <div className="flex justify-center gap-4 text-xs">
-                            <a href="https://aa.org" target="_blank" className="text-[#7A0050] hover:underline">AA.org</a>
-                            <a href="https://na.org" target="_blank" className="text-[#7A0050] hover:underline">NA.org</a>
-                            <a href="https://ca.org" target="_blank" className="text-[#7A0050] hover:underline">CA.org</a>
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-2xl border border-[#e5cfe0] shadow-sm">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-[#7A0050]">Meeting Log</h3>
-                            <div className="flex gap-2">
-                                <button onClick={handleCheckIn} className="bg-green-600 text-white px-3 py-1 rounded-lg text-xs flex items-center gap-1 hover:bg-green-700"><CheckCircle size={12}/> Check In</button>
-                                <button onClick={() => setLogs([{id:Date.now().toString(), ts:new Date().toISOString(), type:'Check-Out'}, ...logs])} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-lg text-xs border border-gray-200 hover:bg-gray-200">Check Out</button>
-                            </div>
-                        </div>
-                        <div className="max-h-60 overflow-y-auto space-y-2">
-                            {logs.length === 0 ? <p className="text-sm text-gray-400 italic">No logs yet.</p> : logs.map(l => (
-                                <div key={l.id} className="flex flex-col p-3 bg-gray-50 rounded-lg border border-gray-100 text-sm">
-                                    <div className="flex justify-between">
-                                        <span>{new Date(l.ts).toLocaleString()}</span>
-                                        <b className={l.type === 'Check-In' ? 'text-green-600' : 'text-gray-500'}>{l.type}</b>
-                                    </div>
-                                    {l.location && <div className="text-xs text-gray-400 mt-1 flex items-center gap-1"><MapPin size={10}/> {l.location}</div>}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {view === 'AI_COACH' && <AICoachView />}
-            
-            {view === 'JOURNAL' && <JournalView journals={journals} setJournals={setJournals} awardBadge={awardBadge} />}
-
-            {view === 'STEPWORK' && <StepWorkView list={stepwork} setList={setStepwork} />}
-
-            {view === 'CONTACTS' && <ContactsView list={contacts} setList={setContacts} />}
-
-            {view === 'BADGES' && (
-                <div className="space-y-6">
-                    <h2 className="text-2xl font-bold text-[#7A0050]">Badges & Achievements</h2>
-                    <div className="bg-white p-6 rounded-2xl border border-[#e5cfe0] shadow-sm">
-                        {badges.length === 0 ? <p className="text-gray-500 italic">No badges earned yet. Start using the app to unlock them!</p> : (
-                            <div className="flex flex-wrap gap-3">
-                                {badges.map(b => (
-                                    <div key={b.id} className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#7A0050] bg-[#f8e6f2] text-[#7A0050]">
-                                        <span className="text-xl">🏅</span>
-                                        <div className="flex flex-col">
-                                            <span className="text-xs font-bold">{b.label}</span>
-                                            <span className="text-[10px] opacity-70">{new Date(b.earnedAt).toLocaleDateString()}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {view === 'READINGS' && (
-                <div className="space-y-6">
-                    <h2 className="text-2xl font-bold text-[#7A0050]">Daily Readings</h2>
-                    <div className="grid gap-3">
-                        {[
-                            {t:'Daily Reflections (AA)', u:'https://www.aa.org/daily-reflections', d:'Alcoholics Anonymous'},
-                            {t:'Just For Today (NA)', u:'https://www.jftna.org/jft/', d:'Narcotics Anonymous'},
-                            {t:'Hazelden Thought for the Day', u:'https://www.hazeldenbettyford.org/thought-for-the-day', d:'Daily Inspiration'},
-                            {t:'Our Daily Bread', u:'https://odb.org', d:'Spiritual'}
-                        ].map(r => (
-                            <a key={r.t} href={r.u} target="_blank" className="flex justify-between items-center p-5 bg-white border border-[#e5cfe0] rounded-xl hover:bg-[#f8e6f2] transition-colors shadow-sm group">
-                                <div className="flex items-center gap-3">
-                                    <div className="bg-[#f8e6f2] p-2 rounded-full text-[#7A0050] group-hover:bg-white"><BookOpen size={20}/></div>
-                                    <div><div className="font-bold text-[#2d1b27]">{r.t}</div><div className="text-xs text-[#b33a89]">{r.d}</div></div>
-                                </div>
-                                <ExternalLink size={18} className="text-[#7A0050]"/>
-                            </a>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {view === 'HELP' && (
+            {/* CONTENT RENDER */}
+            {view === View.DASHBOARD && <Dashboard sobrietyDate={sobrietyDate} setSobrietyDate={setSobrietyDate} journals={journals} streakCount={streak.current} />}
+            {view === View.MEETINGS && <MeetingFinder logs={logs} onCheckIn={handleCheckIn} onCheckOut={() => setLogs([{id:Date.now().toString(), timestamp:new Date().toISOString(), type:'Check-Out'}, ...logs])} />}
+            {view === View.AI_COACH && <AICoachView />}
+            {view === View.JOURNAL && <JournalView journals={journals} setJournals={setJournals} awardBadge={awardBadge} />}
+            {view === View.STEPWORK && <StepWorkComponent stepWorkList={stepwork} saveStepWork={w=>setStepwork([...stepwork, w])} deleteStepWork={id=>setStepwork(stepwork.filter(i=>i.id!==id))} />}
+            {view === View.BADGES && <Badges badges={badges} streak={streak} />}
+            {view === View.READINGS && <Readings />}
+            {view === View.CONTACTS && <ContactsView list={contacts} setList={setContacts} />}
+            {view === View.HELP && (
                 <div className="text-center pt-10 max-w-lg mx-auto">
                     <Siren size={80} className="mx-auto text-red-500 animate-pulse" />
                     <h2 className="text-3xl font-bold mt-6 mb-2 text-[#2d1b27]">Immediate Crisis Support</h2>
@@ -515,7 +408,7 @@ function App() {
   );
 }
 
-// --- SUB-COMPONENTS (DEFINED LOCALLY TO KEEP SINGLE FILE) ---
+// --- SUB-COMPONENTS (DEFINED LOCALLY) ---
 
 const AICoachView = () => {
     const [msg, setMsg] = useState('');
@@ -610,43 +503,6 @@ const JournalView = ({ journals, setJournals, awardBadge }: { journals: JournalE
                         </div>
                         <p className="text-sm text-[#2d1b27] mb-4 whitespace-pre-wrap">{j.text}</p>
                         {j.aiReflection && <div className="bg-[#f8e6f2] p-3 rounded-xl text-xs text-[#7A0050] flex gap-2"><Sparkles size={16} className="shrink-0"/> <div><b>AI Reflection:</b> {j.aiReflection}</div></div>}
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
-
-const StepWorkView = ({ list, setList }: { list: StepWorkItem[], setList: any }) => {
-    const [f, setF] = useState({ name: '', phone: '', email: '', step: 'Step 1', plan: '' });
-    const save = () => {
-        if(!f.name) return;
-        setList([...list, { ...f, id: Date.now().toString() }]);
-        setF({ name: '', phone: '', email: '', step: 'Step 1', plan: '' });
-    };
-    return (
-        <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-[#7A0050]">My Stepwork</h2>
-            <div className="bg-white p-6 rounded-2xl border border-[#e5cfe0] shadow-sm space-y-3">
-                <input value={f.name} onChange={e=>setF({...f, name:e.target.value})} placeholder="Sponsor Name" className="w-full p-3 border border-[#e5cfe0] rounded-xl outline-none" />
-                <div className="flex gap-3">
-                    <input value={f.phone} onChange={e=>setF({...f, phone:e.target.value})} placeholder="Phone" className="w-full p-3 border border-[#e5cfe0] rounded-xl outline-none" />
-                    <input value={f.email} onChange={e=>setF({...f, email:e.target.value})} placeholder="Email" className="w-full p-3 border border-[#e5cfe0] rounded-xl outline-none" />
-                </div>
-                <select value={f.step} onChange={e=>setF({...f, step:e.target.value})} className="w-full p-3 border border-[#e5cfe0] rounded-xl bg-white">{[...Array(12)].map((_,i)=><option key={i} value={`Step ${i+1}`}>Step {i+1}</option>)}</select>
-                <textarea value={f.plan} onChange={e=>setF({...f, plan:e.target.value})} placeholder="Weekly Plan..." className="w-full p-3 border border-[#e5cfe0] rounded-xl h-24 outline-none" />
-                <button onClick={save} className="w-full bg-[#7A0050] text-white py-3 rounded-xl font-bold hover:bg-[#b33a89]">Save Info</button>
-            </div>
-            <div className="space-y-3">
-                {list.map(i => (
-                    <div key={i.id} className="bg-white p-4 rounded-2xl border border-[#e5cfe0] flex justify-between items-start">
-                        <div>
-                            <div className="font-bold text-[#7A0050]">{i.name}</div>
-                            <div className="text-xs text-gray-500 mb-2">{i.phone} • {i.email}</div>
-                            <div className="text-sm font-medium">{i.step}</div>
-                            <div className="text-xs bg-[#f8e6f2] p-2 rounded-lg mt-2">{i.plan}</div>
-                        </div>
-                        <button onClick={()=>setList(list.filter(l=>l.id!==i.id))} className="text-gray-400 hover:text-red-500"><Trash2 size={18}/></button>
                     </div>
                 ))}
             </div>
