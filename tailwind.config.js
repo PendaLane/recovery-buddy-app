@@ -7,6 +7,12 @@ export default {
   theme: {
     extend: {
       colors: {
+        'penda-purple': '#5b3a6f',
+        'penda-light': '#a178a6',
+        'penda-bg': '#f4e8d9',
+        'penda-text': '#2f1f17',
+        'penda-border': '#e5d5c1',
+        'penda-tan': '#f0e1cd',
         'penda-purple': '#4f46e5',
         'penda-light': '#818cf8',
         'penda-bg': '#eef2ff',

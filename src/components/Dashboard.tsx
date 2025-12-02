@@ -50,7 +50,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ sobrietyDate, setSobrietyD
       </header>
 
       {/* Sobriety Counter Card */}
-      <div className="bg-gradient-to-r from-penda-purple to-penda-light rounded-soft p-6 text-white shadow-lg relative overflow-hidden border border-penda-purple">
+      <div className="bg-gradient-to-r from-penda-purple via-penda-light to-penda-tan rounded-soft p-6 text-white shadow-lg relative overflow-hidden border border-penda-purple">
         <div className="absolute top-0 right-0 p-8 opacity-10">
             <Award size={120} />
         </div>
@@ -63,12 +63,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ sobrietyDate, setSobrietyD
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => onNavigate?.(View.MEETINGS)}
+                  className="flex-1 bg-white text-penda-purple py-2 rounded-firm text-sm font-bold flex items-center justify-center gap-2 hover:bg-penda-bg transition-colors"
                   className="flex-1 bg-white text-penda-purple py-2 rounded-firm text-sm font-bold flex items-center justify-center gap-2 hover:bg-slate-100 transition-colors"
                 >
                   <LogIn size={16} /> Meeting Finder
                 </button>
                 <button
                   onClick={() => onNavigate?.(View.JOURNAL)}
+                  className="flex-1 bg-penda-purple/90 border border-white/30 text-white py-2 rounded-firm text-sm font-bold flex items-center justify-center gap-2 hover:bg-white hover:text-penda-purple transition-colors"
                   className="flex-1 bg-penda-purple border border-white/30 text-white py-2 rounded-firm text-sm font-bold flex items-center justify-center gap-2 hover:bg-penda-bg hover:text-penda-purple transition-colors"
                 >
                   <UserPlus size={16} /> Start a Journal
@@ -79,7 +81,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ sobrietyDate, setSobrietyD
             <label className="block text-xs uppercase tracking-wide opacity-80 mb-1">Set Clean/Sober Date (Local Only)</label>
             <input
               type="date" 
-              className="w-full p-2 rounded-firm text-penda-purple font-bold"
+              className="w-full p-2 rounded-firm text-penda-purple font-bold border border-penda-border"
               onChange={(e) => setSobrietyDate(e.target.value)}
             />
           </div>
@@ -113,6 +115,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ sobrietyDate, setSobrietyD
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#5b3a6f" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#5b3a6f" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5cfe0' }} />
+                    <Area type="monotone" dataKey="score" stroke="#5b3a6f" fillOpacity={1} fill="url(#colorScore)" strokeWidth={2} />
                       <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.25}/>
                       <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
                     </linearGradient>

@@ -38,11 +38,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isMobile
 
   const baseClass = isMobile
     ? "fixed bottom-0 left-0 w-full bg-white border-t border-penda-border flex overflow-x-auto p-2 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] gap-2"
-    : "w-64 bg-penda-bg border-r border-penda-border flex flex-col p-4 h-full shadow-lg shrink-0 overflow-y-auto";
+    : "w-72 bg-penda-bg border-r border-penda-border/80 flex flex-col p-5 h-full shadow-lg shrink-0 overflow-y-auto";
 
   return (
     <nav className={baseClass}>
       {!isMobile && (
+        <div className="mb-8 px-2 flex flex-col items-center text-center gap-1">
+          <div className="w-24 h-24 rounded-full bg-white border-2 border-penda-purple shadow-lg flex items-center justify-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-penda-light/50 via-penda-tan to-white" />
+            <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-penda-purple to-penda-light text-white flex items-center justify-center text-2xl font-extrabold tracking-tight shadow-inner">
+              PL
+            </div>
+          </div>
+          <div className="text-[11px] uppercase tracking-[0.35em] text-penda-purple mt-1">Penda Lane</div>
+          <h1 className="font-extrabold text-penda-purple text-xl leading-tight">My Recovery Buddy</h1>
+          <p className="text-xs text-penda-text/80">By Penda Lane Behavioral Health</p>
+          <p className="text-[11px] text-penda-light">Compassionate support for every step.</p>
         <div className="mb-8 px-2 flex flex-col items-center text-center">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-penda-purple to-penda-light text-white flex items-center justify-center text-2xl font-bold mb-3 shadow-inner">
               RB
