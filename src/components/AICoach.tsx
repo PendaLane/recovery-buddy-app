@@ -72,7 +72,7 @@ export const AICoach: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#fffdf8]">
         {!hasApiKey && (
           <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-firm">
-            Add your Gemini API key in My Account to enable AI responses.
+            AI responses are temporarily unavailable. Please try again later.
           </div>
         )}
         {messages.map((msg) => (

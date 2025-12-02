@@ -1,52 +1,40 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Compass, HeartPulse, Loader2, Map, Pill, Send, Stethoscope, Sparkles } from 'lucide-react';
-import { getAICoachResponse, getApiKeyStatus } from '../services/geminiService';
+import React, { useMemo, useState } from 'react';
+import { Compass, HeartPulse, Map, Pill, Send, Sparkles, Stethoscope } from 'lucide-react';
 
 export const FindTreatment: React.FC = () => {
   const [state, setState] = useState('');
-  const [selection, setSelection] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
-  const [aiResponse, setAiResponse] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const hasApiKey = useMemo(() => getApiKeyStatus().hasKey, []);
+  const [selection, setSelection] = useState<string | null>(null);
 
-  const cards = [
-    { key: 'rehab', label: 'Addiction Rehabilitation Programs', icon: HeartPulse },
-    { key: 'outpatient', label: 'Outpatient Treatment Programs', icon: Stethoscope },
-    { key: 'meds', label: 'Medication Management', icon: Pill },
-    { key: 'counseling', label: 'Addiction Counseling', icon: Compass },
-  ];
-
-  const handleSelect = (key: string) => {
-    setSelection(key);
-  };
-
-  const promptTemplate = useMemo(
-    () =>
-      selection
-        ? `Help me find ${cards.find((c) => c.key === selection)?.label?.toLowerCase()} in ${state || 'my state'} with insurance-friendly options, proximity, and admission details. Include phone numbers, websites, and any 24/7 contacts.`
-        : `Help me find addiction treatment options in ${state || 'my state'} with clear contacts and next steps.`,
-    [selection, state]
+  const cards = useMemo(
+    () => [
+      { key: 'rehab', label: 'Addiction Rehabilitation Programs', icon: HeartPulse },
+      { key: 'outpatient', label: 'Outpatient Treatment Programs', icon: Stethoscope },
+      { key: 'meds', label: 'Medication Management', icon: Pill },
+      { key: 'counseling', label: 'Addiction Counseling', icon: Compass },
+    ],
+    []
   );
 
-  useEffect(() => {
-    setPrompt(promptTemplate);
-  }, [promptTemplate]);
+  const buildQuery = (base?: string) => {
+    const where = state ? `${state} state` : 'near me';
+    const topic = base || prompt || 'addiction treatment options';
+    return encodeURIComponent(`${topic} in ${where} with phone numbers, websites, and 24/7 intake info`);
+  };
 
-  const handlePromptSubmit = async () => {
-    if (!prompt.trim()) return;
-    setIsLoading(true);
-    const response = await getAICoachResponse([], prompt.trim());
-    setAiResponse(response);
-    setIsLoading(false);
+  const handlePromptSubmit = () => {
+    if (!prompt.trim() && !selection) return;
+    const selectionLabel = cards.find((c) => c.key === selection)?.label;
+    const topic = selectionLabel ? `${selectionLabel} near me` : prompt.trim();
+    window.open('https://www.google.com/search?q=' + buildQuery(topic), '_blank');
   };
 
   return (
     <div className="space-y-6">
       <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-penda-purple">Find Treatment (AI-guided)</h2>
-          <p className="text-sm text-penda-light">Choose what you need and we’ll prep an AI-ready prompt you can copy for your state.</p>
+          <h2 className="text-2xl font-bold text-penda-purple">Find Treatment</h2>
+          <p className="text-sm text-penda-light">Use your state and a focused query to search for nearby care with clear contact details.</p>
         </div>
         <div className="flex items-center gap-2">
           <Map className="text-penda-purple" size={18} />
@@ -63,7 +51,7 @@ export const FindTreatment: React.FC = () => {
         {cards.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
-            onClick={() => handleSelect(key)}
+            onClick={() => setSelection(key)}
             className={`flex items-center gap-3 p-4 rounded-soft border text-left shadow-sm transition-all ${
               selection === key ? 'border-penda-purple bg-penda-bg/70' : 'border-penda-border bg-white hover:border-penda-purple'
             }`}
@@ -71,7 +59,7 @@ export const FindTreatment: React.FC = () => {
             <Icon className="text-penda-purple" size={22} />
             <div>
               <div className="font-semibold text-penda-purple">{label}</div>
-              <div className="text-xs text-penda-light">Tap to draft an AI search focused on your state.</div>
+              <div className="text-xs text-penda-light">Opens a Google search scoped to your state.</div>
             </div>
             <Sparkles className="text-penda-light ml-auto" size={18} />
           </button>
@@ -81,38 +69,56 @@ export const FindTreatment: React.FC = () => {
       <div className="bg-white border border-penda-border rounded-soft p-4 shadow-sm space-y-3">
         <div className="flex items-center gap-2">
           <Sparkles className="text-penda-purple" size={18} />
-          <h3 className="font-bold text-penda-purple text-sm">Ask AI for treatment matches</h3>
+          <h3 className="font-bold text-penda-purple text-sm">Search with precise wording</h3>
         </div>
-
-        {!hasApiKey && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-firm">
-            Add your Gemini API key in My Account to enable AI-powered treatment searches.
-          </div>
-        )}
 
         <div className="relative">
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             className="w-full min-h-[110px] border border-penda-border rounded-firm p-3 pr-12 text-sm focus:outline-none focus:border-penda-purple focus:ring-1 focus:ring-penda-purple"
-            placeholder="Describe the care you need, coverage, or timing. Example: I need outpatient MAT options this week in my state."
+            placeholder="Example: 24/7 outpatient MAT program with same-day intake and insurance verification"
           />
           <button
             onClick={handlePromptSubmit}
-            disabled={isLoading || !prompt.trim()}
+            disabled={!prompt.trim() && !selection}
             className="absolute right-3 bottom-3 bg-penda-purple text-white rounded-firm p-2 hover:bg-penda-light disabled:opacity-50"
           >
-            {isLoading ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
+            <Send size={16} />
           </button>
         </div>
 
-        <p className="text-xs text-penda-light">Prompts auto-include your state for localized options.</p>
+        <p className="text-xs text-penda-light">We’ll open a Google search that combines your wording with your state so results stay local.</p>
+      </div>
 
-        {aiResponse && (
-          <div className="bg-penda-bg border border-penda-border rounded-firm p-3 text-sm text-penda-text whitespace-pre-wrap">
-            {aiResponse}
-          </div>
-        )}
+      <div className="bg-white p-5 rounded-soft shadow-sm border border-penda-border space-y-3">
+        <h3 className="text-penda-purple font-bold text-sm">Suggested wording</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <button
+            onClick={() => setPrompt('State-funded addiction rehab programs with immediate intake')}
+            className="text-left bg-penda-bg border border-penda-border px-3 py-2 rounded-firm text-sm hover:bg-white transition-colors"
+          >
+            State-funded rehab with immediate intake
+          </button>
+          <button
+            onClick={() => setPrompt('Outpatient treatment programs with evening groups and insurance verification')}
+            className="text-left bg-penda-bg border border-penda-border px-3 py-2 rounded-firm text-sm hover:bg-white transition-colors"
+          >
+            Outpatient with evening groups
+          </button>
+          <button
+            onClick={() => setPrompt('Medication-assisted treatment clinics offering buprenorphine in my state')}
+            className="text-left bg-penda-bg border border-penda-border px-3 py-2 rounded-firm text-sm hover:bg-white transition-colors"
+          >
+            Medication management nearby
+          </button>
+          <button
+            onClick={() => setPrompt('Addiction counseling with certified counselors and sliding-scale pricing')}
+            className="text-left bg-penda-bg border border-penda-border px-3 py-2 rounded-firm text-sm hover:bg-white transition-colors"
+          >
+            Counseling with certified providers
+          </button>
+        </div>
       </div>
     </div>
   );

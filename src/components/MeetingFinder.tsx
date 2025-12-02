@@ -1,19 +1,16 @@
 import React, { useMemo, useState } from 'react';
-import { Loader2, MapPin, Send, Sparkles, Wand2 } from 'lucide-react';
-import { getAICoachResponse, getApiKeyStatus } from '../services/geminiService';
+import { MapPin, Send, Sparkles, Wand2 } from 'lucide-react';
 
 export const MeetingFinder: React.FC = () => {
   const [location, setLocation] = useState('');
   const [prompt, setPrompt] = useState('');
-  const [aiResponse, setAiResponse] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const hasApiKey = useMemo(() => getApiKeyStatus().hasKey, []);
   const aiPrompts = useMemo(
     () => [
       'Find the closest beginner-friendly AA meeting',
       'Locate tonight’s NA speaker meeting near me',
       'Show CA meetings within 10 miles this weekend',
       'Find LGBTQ+ friendly recovery meetings nearby',
+      'Smart Recovery meetings near me',
     ],
     []
   );
@@ -43,20 +40,20 @@ export const MeetingFinder: React.FC = () => {
     );
   };
 
-  const handlePromptSubmit = async () => {
+  const handlePromptSubmit = () => {
     if (!prompt.trim()) return;
-    setIsLoading(true);
-    const composedPrompt = `${prompt.trim()} near ${location || 'my current location'}. Provide times, addresses, accessibility notes, and any online links if available.`;
-    const response = await getAICoachResponse([], composedPrompt);
-    setAiResponse(response);
-    setIsLoading(false);
+    const loc = (location || 'near me').trim();
+    const query = encodeURIComponent(
+      `${prompt.trim()} recovery meeting options ${loc} with official listings, schedule, and address`
+    );
+    window.open('https://www.google.com/search?q=' + query, '_blank');
   };
 
   return (
     <div className="space-y-6">
       <header>
         <h2 className="text-2xl font-bold text-penda-purple">Find A Meeting</h2>
-        <p className="text-sm text-penda-light">Use AI-powered quick prompts or a manual search to reach the right room fast.</p>
+        <p className="text-sm text-penda-light">Search trusted meeting directories or launch a location-aware Google search.</p>
       </header>
 
       {/* Search Card */}
@@ -82,46 +79,42 @@ export const MeetingFinder: React.FC = () => {
           <button onClick={() => searchMeetings('AA')} className="bg-penda-purple text-white px-4 py-2 rounded-firm text-sm hover:bg-penda-light transition-colors">AA near me</button>
           <button onClick={() => searchMeetings('NA')} className="bg-white border border-penda-purple text-penda-purple px-4 py-2 rounded-firm text-sm hover:bg-penda-bg transition-colors">NA near me</button>
           <button onClick={() => searchMeetings('CA')} className="bg-white border border-penda-purple text-penda-purple px-4 py-2 rounded-firm text-sm hover:bg-penda-bg transition-colors">CA near me</button>
+          <button onClick={() => searchMeetings('Smart Recovery')} className="bg-white border border-penda-purple text-penda-purple px-4 py-2 rounded-firm text-sm hover:bg-penda-bg transition-colors">Smart Recovery near me</button>
         </div>
 
         <h3 className="text-penda-purple font-bold text-sm mb-2">Official Meeting Sites</h3>
-        <div className="flex gap-2">
-            <a href="https://aa.org" target="_blank" className="text-xs bg-penda-bg text-penda-purple px-3 py-1.5 rounded-firm border border-penda-border hover:bg-white">AA.org</a>
-            <a href="https://na.org" target="_blank" className="text-xs bg-penda-bg text-penda-purple px-3 py-1.5 rounded-firm border border-penda-border hover:bg-white">NA.org</a>
-            <a href="https://ca.org" target="_blank" className="text-xs bg-penda-bg text-penda-purple px-3 py-1.5 rounded-firm border border-penda-border hover:bg-white">CA.org</a>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <a href="https://aa.org" target="_blank" className="text-xs bg-penda-bg text-penda-purple px-3 py-3 rounded-firm border border-penda-border hover:bg-white text-center w-full">AA.org (find local meetings)</a>
+            <a href="https://www.smartrecovery.org/local/" target="_blank" className="text-xs bg-penda-bg text-penda-purple px-3 py-3 rounded-firm border border-penda-border hover:bg-white text-center w-full">SMART Recovery (meeting search)</a>
+            <a href="https://na.org/meetingsearch/" target="_blank" className="text-xs bg-penda-bg text-penda-purple px-3 py-3 rounded-firm border border-penda-border hover:bg-white text-center w-full">NA.org (meeting search)</a>
+            <a href="https://ca.org/meetings/" target="_blank" className="text-xs bg-penda-bg text-penda-purple px-3 py-3 rounded-firm border border-penda-border hover:bg-white text-center w-full">CA.org (meeting list)</a>
         </div>
       </div>
 
       <div className="bg-white p-5 rounded-soft shadow-sm border border-penda-border space-y-4">
         <div className="flex items-center gap-2">
           <Sparkles className="text-penda-purple" size={18} />
-          <h3 className="font-bold text-penda-purple text-sm">Ask AI about meetings</h3>
+          <h3 className="font-bold text-penda-purple text-sm">Search with clear wording</h3>
         </div>
-
-        {!hasApiKey && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-firm">
-            Add your Gemini API key in My Account to unlock AI suggestions.
-          </div>
-        )}
 
         <div className="flex flex-col gap-2">
           <div className="relative">
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Tell me the meeting type, day, or accessibility you need..."
+              placeholder="Example: Find a women’s-only AA meeting tonight in my city with wheelchair access"
               className="w-full border border-penda-border rounded-firm p-3 pr-12 text-sm focus:outline-none focus:border-penda-purple focus:ring-1 focus:ring-penda-purple min-h-[96px]"
             />
             <button
               onClick={handlePromptSubmit}
-              disabled={isLoading || !prompt.trim()}
+              disabled={!prompt.trim()}
               className="absolute right-3 bottom-3 bg-penda-purple text-white rounded-firm p-2 hover:bg-penda-light disabled:opacity-50"
             >
-              {isLoading ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
+              <Send size={16} />
             </button>
           </div>
 
-          <p className="text-xs text-penda-light">AI will tailor suggestions using your location when provided.</p>
+          <p className="text-xs text-penda-light">We’ll open a Google search using your wording plus your location to surface accurate meeting options.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
