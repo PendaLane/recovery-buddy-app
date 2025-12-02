@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { Loader2, MapPin, Send, Sparkles, Wand2 } from 'lucide-react';
-import { getAICoachResponse } from '../services/geminiService';
+import { getAICoachResponse, getApiKeyStatus } from '../services/geminiService';
 
 export const MeetingFinder: React.FC = () => {
   const [location, setLocation] = useState('');
   const [prompt, setPrompt] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const hasApiKey = useMemo(() => getApiKeyStatus().hasKey, []);
   const aiPrompts = useMemo(
     () => [
       'Find the closest beginner-friendly AA meeting',
@@ -49,12 +50,6 @@ export const MeetingFinder: React.FC = () => {
     const response = await getAICoachResponse([], composedPrompt);
     setAiResponse(response);
     setIsLoading(false);
-  };
-
-  const runAIPrompt = (prompt: string) => {
-    const loc = (location || 'my state').trim();
-    const q = encodeURIComponent(`${prompt} in ${loc}`);
-    window.open(`https://www.google.com/maps/search/${q}`, '_blank');
   };
 
   return (
@@ -102,6 +97,12 @@ export const MeetingFinder: React.FC = () => {
           <Sparkles className="text-penda-purple" size={18} />
           <h3 className="font-bold text-penda-purple text-sm">Ask AI about meetings</h3>
         </div>
+
+        {!hasApiKey && (
+          <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-firm">
+            Add your Gemini API key in My Account to unlock AI suggestions.
+          </div>
+        )}
 
         <div className="flex flex-col gap-2">
           <div className="relative">

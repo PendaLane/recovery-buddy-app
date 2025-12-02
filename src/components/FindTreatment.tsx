@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Compass, HeartPulse, Loader2, Map, Pill, Send, Stethoscope, Sparkles } from 'lucide-react';
-import { getAICoachResponse } from '../services/geminiService';
+import { getAICoachResponse, getApiKeyStatus } from '../services/geminiService';
 
 export const FindTreatment: React.FC = () => {
   const [state, setState] = useState('');
@@ -8,6 +8,7 @@ export const FindTreatment: React.FC = () => {
   const [prompt, setPrompt] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const hasApiKey = useMemo(() => getApiKeyStatus().hasKey, []);
 
   const cards = [
     { key: 'rehab', label: 'Addiction Rehabilitation Programs', icon: HeartPulse },
@@ -82,6 +83,12 @@ export const FindTreatment: React.FC = () => {
           <Sparkles className="text-penda-purple" size={18} />
           <h3 className="font-bold text-penda-purple text-sm">Ask AI for treatment matches</h3>
         </div>
+
+        {!hasApiKey && (
+          <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-firm">
+            Add your Gemini API key in My Account to enable AI-powered treatment searches.
+          </div>
+        )}
 
         <div className="relative">
           <textarea

@@ -12,6 +12,8 @@ interface MyAccountProps {
   };
   notificationsEnabled: boolean;
   onToggleNotifications: (enabled: boolean) => void;
+  aiApiKey: string;
+  onUpdateApiKey: (key: string) => void;
 }
 
 export const MyAccount: React.FC<MyAccountProps> = ({
@@ -20,8 +22,11 @@ export const MyAccount: React.FC<MyAccountProps> = ({
   stats,
   notificationsEnabled,
   onToggleNotifications,
+  aiApiKey,
+  onUpdateApiKey,
 }) => {
   const [formState, setFormState] = useState(user);
+  const [apiKeyInput, setApiKeyInput] = useState(aiApiKey);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const memberSince = formState.joinedAt
@@ -31,6 +36,10 @@ export const MyAccount: React.FC<MyAccountProps> = ({
   useEffect(() => {
     setFormState(user);
   }, [user]);
+
+  useEffect(() => {
+    setApiKeyInput(aiApiKey);
+  }, [aiApiKey]);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -52,6 +61,10 @@ export const MyAccount: React.FC<MyAccountProps> = ({
       ...formState,
       joinedAt: formState.joinedAt || new Date().toISOString(),
     });
+  };
+
+  const handleSaveApiKey = () => {
+    onUpdateApiKey(apiKeyInput.trim());
   };
 
   return (
@@ -148,6 +161,31 @@ export const MyAccount: React.FC<MyAccountProps> = ({
                   }`}
                 />
               </button>
+            </div>
+            <div className="p-3 rounded-firm border border-penda-border bg-penda-bg space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-penda-text">Gemini API Key</p>
+                  <p className="text-xs text-penda-text/70">Store your private key to enable all AI-powered tools.</p>
+                </div>
+                {!apiKeyInput && <span className="text-xs font-semibold text-red-600">Missing</span>}
+              </div>
+              <input
+                type="password"
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                placeholder="Paste your Gemini API key"
+                className="w-full mt-1 p-3 rounded-firm border border-penda-border focus:border-penda-purple focus:ring-2 focus:ring-penda-light"
+              />
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                <p className="text-[11px] text-penda-text/70">Key stays on your device and is used for chat, meeting, and treatment prompts.</p>
+                <button
+                  onClick={handleSaveApiKey}
+                  className="inline-flex items-center justify-center gap-2 bg-penda-purple text-white font-semibold px-4 py-2 rounded-firm shadow-sm hover:shadow-md"
+                >
+                  Save AI Access
+                </button>
+              </div>
             </div>
             <button
               onClick={handleSave}

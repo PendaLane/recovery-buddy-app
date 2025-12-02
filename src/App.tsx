@@ -23,6 +23,7 @@ import { PhoneBook } from './components/PhoneBook';
 import { MyAccount } from './components/MyAccount';
 import { FindTreatment } from './components/FindTreatment';
 import { SignUp } from './components/SignUp';
+import { setApiKey } from './services/geminiService';
 
 const loadFromStorage = <T,>(key: string, fallback: T): T => {
   if (typeof localStorage === 'undefined') return fallback;
@@ -82,6 +83,15 @@ const App: React.FC = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(() =>
     loadFromStorage<boolean>('notificationsEnabled', true)
   );
+  const [aiApiKey, setAiApiKeyState] = useState<string>(() =>
+    loadFromStorage<string>('aiApiKey', import.meta.env.VITE_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || '')
+  );
+
+  useEffect(() => {
+    if (aiApiKey) {
+      setApiKey(aiApiKey);
+    }
+  }, []);
 
   useEffect(() => {
     persistToStorage('userProfile', user);
@@ -114,6 +124,11 @@ const App: React.FC = () => {
   useEffect(() => {
     persistToStorage('notificationsEnabled', notificationsEnabled);
   }, [notificationsEnabled]);
+
+  useEffect(() => {
+    persistToStorage('aiApiKey', aiApiKey);
+    setApiKey(aiApiKey);
+  }, [aiApiKey]);
 
   const addJournalEntry = (entry: JournalEntry) => {
     setJournals((prev) => [...prev, entry]);
@@ -206,6 +221,10 @@ const App: React.FC = () => {
     setCurrentView(View.SIGN_UP);
   };
 
+  const handleUpdateApiKey = (key: string) => {
+    setAiApiKeyState(key);
+  };
+
   const handleSignUpSubmit = (profile: Partial<UserProfile>) => {
     setUser((prev) => ({
       ...prev,
@@ -250,6 +269,8 @@ const App: React.FC = () => {
             stats={{ streakCount, journalCount: journals.length, meetingCount: meetingLogs.length }}
             notificationsEnabled={notificationsEnabled}
             onToggleNotifications={setNotificationsEnabled}
+            aiApiKey={aiApiKey}
+            onUpdateApiKey={handleUpdateApiKey}
           />
         );
       case View.SIGN_UP:
