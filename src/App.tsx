@@ -82,7 +82,6 @@ const App: React.FC = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(() =>
     loadFromStorage<boolean>('notificationsEnabled', true)
   );
-  const aiEnabled = Boolean(import.meta.env.VITE_API_KEY || import.meta.env.VITE_GEMINI_API_KEY);
 
   useEffect(() => {
     persistToStorage('userProfile', user);
@@ -251,7 +250,6 @@ const App: React.FC = () => {
             stats={{ streakCount, journalCount: journals.length, meetingCount: meetingLogs.length }}
             notificationsEnabled={notificationsEnabled}
             onToggleNotifications={setNotificationsEnabled}
-            aiEnabled={aiEnabled}
           />
         );
       case View.SIGN_UP:

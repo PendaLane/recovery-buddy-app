@@ -9,7 +9,7 @@ interface PhoneBookProps {
   emergencyContact?: { name: string; phone: string; relation?: string };
 }
 
-const roleOptions: Contact['role'][] = ['Sponsor', 'Peer Support', 'Therapist', 'Family'];
+const roleOptions: Contact['role'][] = ['Sponsor', 'Peer Support', 'Therapist', 'Family', 'Friend'];
 const fellowshipOptions: Contact['fellowship'][] = ['AA', 'NA', 'CA', 'Other'];
 
 export const PhoneBook: React.FC<PhoneBookProps> = ({ contacts, onSave, onDelete, emergencyContact }) => {

@@ -27,7 +27,7 @@ export interface JournalEntry {
 export interface Contact {
   id: string;
   name: string;
-  role: 'Sponsor' | 'Peer Support' | 'Therapist' | 'Family';
+  role: 'Sponsor' | 'Peer Support' | 'Therapist' | 'Family' | 'Friend';
   phone: string;
   fellowship: 'AA' | 'NA' | 'CA' | 'Other';
 }

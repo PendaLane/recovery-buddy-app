@@ -12,7 +12,6 @@ interface MyAccountProps {
   };
   notificationsEnabled: boolean;
   onToggleNotifications: (enabled: boolean) => void;
-  aiEnabled: boolean;
 }
 
 export const MyAccount: React.FC<MyAccountProps> = ({
@@ -21,7 +20,6 @@ export const MyAccount: React.FC<MyAccountProps> = ({
   stats,
   notificationsEnabled,
   onToggleNotifications,
-  aiEnabled,
 }) => {
   const [formState, setFormState] = useState(user);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -156,12 +154,8 @@ export const MyAccount: React.FC<MyAccountProps> = ({
               <Bell size={18} />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-penda-text">AI access</p>
-              <p className="text-xs text-penda-text/70">
-                {aiEnabled
-                  ? 'All AI tools are ready to use—no setup required.'
-                  : 'AI responses are temporarily unavailable; we will restore access soon.'}
-              </p>
+              <p className="text-sm font-semibold text-penda-text">Safety alerts</p>
+              <p className="text-xs text-penda-text/70">Stay informed about reminders and session updates.</p>
             </div>
           </div>
           <button

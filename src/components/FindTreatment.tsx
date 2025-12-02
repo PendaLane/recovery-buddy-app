@@ -8,10 +8,30 @@ export const FindTreatment: React.FC = () => {
 
   const cards = useMemo(
     () => [
-      { key: 'rehab', label: 'Addiction Rehabilitation Programs', icon: HeartPulse },
-      { key: 'outpatient', label: 'Outpatient Treatment Programs', icon: Stethoscope },
-      { key: 'meds', label: 'Medication Management', icon: Pill },
-      { key: 'counseling', label: 'Addiction Counseling', icon: Compass },
+      {
+        key: 'rehab',
+        label: 'Addiction Rehabilitation Programs',
+        icon: HeartPulse,
+        prompt: 'State-funded addiction rehab programs with immediate intake and medical detox',
+      },
+      {
+        key: 'outpatient',
+        label: 'Outpatient Treatment Programs',
+        icon: Stethoscope,
+        prompt: 'Outpatient treatment programs with evening groups and insurance verification',
+      },
+      {
+        key: 'meds',
+        label: 'Medication Management',
+        icon: Pill,
+        prompt: 'Medication-assisted treatment clinics offering buprenorphine and same-week appointments',
+      },
+      {
+        key: 'counseling',
+        label: 'Addiction Counseling',
+        icon: Compass,
+        prompt: 'Addiction counseling with certified counselors and sliding-scale pricing',
+      },
     ],
     []
   );
@@ -24,9 +44,15 @@ export const FindTreatment: React.FC = () => {
 
   const handlePromptSubmit = () => {
     if (!prompt.trim() && !selection) return;
-    const selectionLabel = cards.find((c) => c.key === selection)?.label;
-    const topic = selectionLabel ? `${selectionLabel} near me` : prompt.trim();
+    const selectionPrompt = cards.find((c) => c.key === selection)?.prompt;
+    const topic = selectionPrompt || prompt.trim();
     window.open('https://www.google.com/search?q=' + buildQuery(topic), '_blank');
+  };
+
+  const handleCardClick = (key: string, cardPrompt: string) => {
+    setSelection(key);
+    setPrompt(cardPrompt);
+    window.open('https://www.google.com/search?q=' + buildQuery(cardPrompt), '_blank');
   };
 
   return (
@@ -48,10 +74,10 @@ export const FindTreatment: React.FC = () => {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {cards.map(({ key, label, icon: Icon }) => (
+        {cards.map(({ key, label, icon: Icon, prompt: cardPrompt }) => (
           <button
             key={key}
-            onClick={() => setSelection(key)}
+            onClick={() => handleCardClick(key, cardPrompt)}
             className={`flex items-center gap-3 p-4 rounded-soft border text-left shadow-sm transition-all ${
               selection === key ? 'border-penda-purple bg-penda-bg/70' : 'border-penda-border bg-white hover:border-penda-purple'
             }`}
@@ -91,35 +117,6 @@ export const FindTreatment: React.FC = () => {
         <p className="text-xs text-penda-light">We’ll open a Google search that combines your wording with your state so results stay local.</p>
       </div>
 
-      <div className="bg-white p-5 rounded-soft shadow-sm border border-penda-border space-y-3">
-        <h3 className="text-penda-purple font-bold text-sm">Suggested wording</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <button
-            onClick={() => setPrompt('State-funded addiction rehab programs with immediate intake')}
-            className="text-left bg-penda-bg border border-penda-border px-3 py-2 rounded-firm text-sm hover:bg-white transition-colors"
-          >
-            State-funded rehab with immediate intake
-          </button>
-          <button
-            onClick={() => setPrompt('Outpatient treatment programs with evening groups and insurance verification')}
-            className="text-left bg-penda-bg border border-penda-border px-3 py-2 rounded-firm text-sm hover:bg-white transition-colors"
-          >
-            Outpatient with evening groups
-          </button>
-          <button
-            onClick={() => setPrompt('Medication-assisted treatment clinics offering buprenorphine in my state')}
-            className="text-left bg-penda-bg border border-penda-border px-3 py-2 rounded-firm text-sm hover:bg-white transition-colors"
-          >
-            Medication management nearby
-          </button>
-          <button
-            onClick={() => setPrompt('Addiction counseling with certified counselors and sliding-scale pricing')}
-            className="text-left bg-penda-bg border border-penda-border px-3 py-2 rounded-firm text-sm hover:bg-white transition-colors"
-          >
-            Counseling with certified providers
-          </button>
-        </div>
-      </div>
     </div>
   );
 };
