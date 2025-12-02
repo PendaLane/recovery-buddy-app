@@ -1,9 +1,54 @@
 import { GoogleGenAI } from "@google/genai";
 import { ChatMessage } from "../types";
 
-// Initialize Gemini Client
-const apiKey = import.meta.env.VITE_API_KEY;
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+const ENV_API_KEY = import.meta.env.VITE_API_KEY || import.meta.env.VITE_GEMINI_API_KEY;
+
+const readStoredKey = (): string => {
+  if (typeof localStorage === "undefined") return "";
+  try {
+    return localStorage.getItem("aiApiKey") || "";
+  } catch (error) {
+    console.warn("Unable to read AI API key from storage", error);
+    return "";
+  }
+};
+
+let activeApiKey = ENV_API_KEY || readStoredKey();
+let ai = activeApiKey ? new GoogleGenAI({ apiKey: activeApiKey }) : null;
+
+export const setApiKey = (key: string) => {
+  activeApiKey = key.trim();
+
+  if (typeof localStorage !== "undefined") {
+    try {
+      if (activeApiKey) {
+        localStorage.setItem("aiApiKey", activeApiKey);
+      } else {
+        localStorage.removeItem("aiApiKey");
+      }
+    } catch (error) {
+      console.warn("Unable to persist AI API key", error);
+    }
+  }
+
+  ai = activeApiKey ? new GoogleGenAI({ apiKey: activeApiKey }) : null;
+};
+
+export const getApiKeyStatus = () => ({
+  hasKey: Boolean(activeApiKey),
+  source: activeApiKey === ENV_API_KEY ? "env" : activeApiKey ? "saved" : "none",
+});
+
+const getClient = () => {
+  if (ai) return ai;
+
+  const storedKey = readStoredKey();
+  if (storedKey) {
+    ai = new GoogleGenAI({ apiKey: storedKey });
+    activeApiKey = storedKey;
+  }
+  return ai;
+};
 
 const SYSTEM_INSTRUCTION_COACH = `
 You are "Recovery Buddy", a compassionate, non-judgmental, and wise recovery coach and sponsor. 
@@ -16,7 +61,8 @@ Your goal is to support the user in their sobriety from alcohol and substances.
 `;
 
 export const getAICoachResponse = async (history: ChatMessage[], newMessage: string): Promise<string> => {
-  if (!ai) return "Error: API Key is missing. Please check your configuration.";
+  const client = getClient();
+  if (!client) return "Error: API Key is missing. Please check your configuration.";
 
   try {
     const model = 'gemini-2.5-flash';
@@ -26,7 +72,7 @@ export const getAICoachResponse = async (history: ChatMessage[], newMessage: str
       parts: [{ text: msg.text }]
     }));
 
-    const chat = ai.chats.create({
+    const chat = client.chats.create({
       model,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION_COACH,
@@ -44,7 +90,8 @@ export const getAICoachResponse = async (history: ChatMessage[], newMessage: str
 };
 
 export const analyzeJournalEntry = async (entryText: string, mood: string): Promise<string> => {
-  if (!ai) return "Unable to generate reflection without API Key.";
+  const client = getClient();
+  if (!client) return "Unable to generate reflection without API Key.";
 
   try {
     const prompt = `
@@ -56,7 +103,7 @@ export const analyzeJournalEntry = async (entryText: string, mood: string): Prom
       End with a short encouraging affirmation.
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await client.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
     });
