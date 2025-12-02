@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import './index.css';
 import {
   Badge,
+  Contact,
   JournalEntry,
   MeetingLog,
   StepWork,
@@ -17,6 +18,7 @@ import { MeetingFinder } from './components/MeetingFinder';
 import { StepWorkComponent } from './components/StepWork';
 import { Badges } from './components/Badges';
 import { Readings } from './components/Readings';
+import { PhoneBook } from './components/PhoneBook';
 
 const loadFromStorage = <T,>(key: string, fallback: T): T => {
   if (typeof localStorage === 'undefined') return fallback;
@@ -61,6 +63,7 @@ const App: React.FC = () => {
   const [meetingLogs, setMeetingLogs] = useState<MeetingLog[]>(() =>
     loadFromStorage<MeetingLog[]>('meetingLogs', [])
   );
+  const [contacts, setContacts] = useState<Contact[]>(() => loadFromStorage<Contact[]>('contacts', []));
   const [streak, setStreak] = useState<Streak>(() =>
     loadFromStorage<Streak>('streak', { current: 0, longest: 0, lastCheckInDate: null })
   );
@@ -81,6 +84,10 @@ const App: React.FC = () => {
   }, [meetingLogs]);
 
   useEffect(() => {
+    persistToStorage('contacts', contacts);
+  }, [contacts]);
+
+  useEffect(() => {
     persistToStorage('streak', streak);
   }, [streak]);
 
@@ -98,6 +105,15 @@ const App: React.FC = () => {
 
   const deleteStepWork = (id: string) => {
     setStepWorkList((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const saveContact = (contact: Omit<Contact, 'id'>) => {
+    const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Date.now().toString();
+    setContacts((prev) => [...prev, { ...contact, id }]);
+  };
+
+  const deleteContact = (id: string) => {
+    setContacts((prev) => prev.filter((contact) => contact.id !== id));
   };
 
   const updateStreakOnCheckIn = (timestamp: Date) => {
@@ -174,6 +190,8 @@ const App: React.FC = () => {
         return <Badges badges={sampleBadges} streak={streak} />;
       case View.READINGS:
         return <Readings />;
+      case View.CONTACTS:
+        return <PhoneBook contacts={contacts} onSave={saveContact} onDelete={deleteContact} />;
       case View.HELP:
         return (
           <div className="space-y-4">

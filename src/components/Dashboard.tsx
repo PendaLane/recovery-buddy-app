@@ -121,6 +121,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ sobrietyDate, setSobrietyD
                   </defs>
                   <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5cfe0' }} />
                     <Area type="monotone" dataKey="score" stroke="#5b3a6f" fillOpacity={1} fill="url(#colorScore)" strokeWidth={2} />
+                    </linearGradient>
+                  </defs>
+                  <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5cfe0' }} />
+                    <Area type="monotone" dataKey="score" stroke="#5b3a6f" fillOpacity={1} fill="url(#colorScore)" strokeWidth={2} />
                       <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.25}/>
                       <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
                     </linearGradient>
