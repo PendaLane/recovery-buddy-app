@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { MapPin, Send, Sparkles, Wand2 } from 'lucide-react';
 
 const quickIdeas = [
@@ -6,7 +6,7 @@ const quickIdeas = [
   'Locate tonight’s NA speaker meeting near me',
   'Show CA meetings within 10 miles this weekend',
   'Find LGBTQ+ friendly recovery meetings nearby',
-  'Smart Recovery meetings near me',
+  'SMART Recovery meetings near me',
 ];
 
 const directories = [
@@ -19,31 +19,40 @@ const directories = [
 export const MeetingFinder: React.FC = () => {
   const [location, setLocation] = useState('');
   const [prompt, setPrompt] = useState('');
-  const aiPrompts = useMemo(() => quickIdeas, []);
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   const searchMeetings = (type: string) => {
     const loc = (location || 'near me').trim();
     const q = encodeURIComponent(`${type} meeting ${loc}`);
-    if (typeof window !== 'undefined') {
+
+    try {
       window.open('https://www.google.com/maps/search/' + q, '_blank');
+    } catch (err) {
+      console.error('Unable to open search window', err);
+      alert('Unable to open the search window. Please allow pop-ups or try again.');
     }
   };
 
   const useMyLocation = () => {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      alert('Location services are not available in this browser.');
+    if (!navigator?.geolocation) {
+      setLocationError('Location services are not available in this browser.');
       return;
     }
 
+    setLocationError(null);
+    setLocating(true);
     setLocation('Locating...');
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
         const coordsLabel = `${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}`;
         setLocation(coordsLabel);
+        setLocating(false);
       },
       () => {
         setLocation('');
-        alert('Unable to fetch your location. Please enter a city or ZIP instead.');
+        setLocating(false);
+        setLocationError('Unable to fetch your location. Please enter a city or ZIP instead.');
       }
     );
   };
@@ -54,8 +63,11 @@ export const MeetingFinder: React.FC = () => {
     const query = encodeURIComponent(
       `${prompt.trim()} recovery meeting options ${loc} with official listings, schedule, and address`
     );
-    if (typeof window !== 'undefined') {
+    try {
       window.open('https://www.google.com/search?q=' + query, '_blank');
+    } catch (err) {
+      console.error('Unable to open search window', err);
+      alert('Unable to open the search window. Please allow pop-ups or try again.');
     }
   };
 
@@ -86,8 +98,9 @@ export const MeetingFinder: React.FC = () => {
           <button
             onClick={useMyLocation}
             className="text-xs bg-penda-bg text-penda-purple border border-penda-border px-3 py-2 rounded-firm hover:bg-white transition-colors"
+            disabled={locating}
           >
-            Use my location
+            {locating ? 'Locating…' : 'Use my location'}
           </button>
           <button
             onClick={() => searchMeetings('AA')}
@@ -114,6 +127,8 @@ export const MeetingFinder: React.FC = () => {
             Smart Recovery near me
           </button>
         </div>
+
+        {locationError && <p className="text-xs text-red-600">{locationError}</p>}
 
         <div>
           <h3 className="text-penda-purple font-bold text-sm mb-2">Official Meeting Sites</h3>
@@ -162,7 +177,7 @@ export const MeetingFinder: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {aiPrompts.map((idea) => (
+          {quickIdeas.map((idea) => (
             <button
               key={idea}
               onClick={() => setPrompt(idea)}
