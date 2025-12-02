@@ -196,13 +196,14 @@ const App: React.FC = () => {
             journals={journals}
             streakCount={streakCount}
             user={user}
+            onNavigate={setCurrentView}
           />
         );
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#fff7fb] text-penda-text">
+    <div className="min-h-screen bg-penda-bg text-penda-text">
       <div className="flex flex-col md:flex-row min-h-screen">
         <Sidebar
           currentView={currentView}
