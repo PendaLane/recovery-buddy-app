@@ -23,6 +23,8 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isMobile, isLoggedIn, shareApp }) => {
+  const wpBaseUrl = 'https://pendalane.com';
+
   const menuItems = [
     { id: View.DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
     { id: View.MEETINGS, label: 'Meeting Finder', icon: MapPin },
