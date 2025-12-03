@@ -1,6 +1,5 @@
 import React from 'react';
 import { View } from '../types';
-import heroLogoSrc from '../assets/penda-lane-logo.svg';
 import {
   LayoutDashboard,
   BookHeart,
@@ -45,6 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isMobile
     ? "fixed bottom-0 left-0 w-full bg-white border-t border-penda-border flex overflow-x-auto p-2 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] gap-2"
     : "w-72 bg-penda-bg border-r border-penda-border/80 flex flex-col p-5 h-full shadow-lg shrink-0 overflow-y-auto";
 
+  const heroLogoSrc = "https://pendalane.com/wp-content/uploads/2024/04/cropped-Penda-Lane-Behavioral-Health-Logo.png";
   const heroTagline = "Meetings. Sponsor. Support. In your pocket.";
 
   return (
