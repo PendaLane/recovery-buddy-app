@@ -92,6 +92,7 @@ export const MeetingFinder: React.FC = () => {
             />
             <MapPin className="absolute left-3 top-2.5 text-penda-border" size={16} />
           </div>
+          <p className="text-[11px] text-penda-light mt-1">Allow location access for the quickest nearby results.</p>
         </div>
 
         <div className="flex flex-wrap gap-2">
