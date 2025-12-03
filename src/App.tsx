@@ -106,6 +106,10 @@ const App: React.FC = () => {
     });
   }, [clientId, user, sobrietyDate, journals, meetingLogs, contacts, streak, stepWorkList, notificationsEnabled, isHydrating]);
 
+  useEffect(() => {
+    persistToStorage('notificationsEnabled', notificationsEnabled);
+  }, [notificationsEnabled]);
+
   const addJournalEntry = (entry: JournalEntry) => {
     setJournals((prev) => [...prev, entry]);
   };
