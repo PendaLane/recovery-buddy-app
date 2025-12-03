@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, Bell, ShieldCheck, UserRound } from 'lucide-react';
+import { Camera, Bell, ShieldCheck, UserRound, LogOut } from 'lucide-react';
 import { UserProfile } from '../types';
 
 interface MyAccountProps {
@@ -58,11 +58,6 @@ export const MyAccount: React.FC<MyAccountProps> = ({
     });
   };
 
-  const authCtaLabel = formState.isLoggedIn ? 'Sign out of My Recovery Buddy' : 'Sign in to My Recovery Buddy';
-
-  const cancelCopy =
-    'Because My Recovery Buddy is free, you can cancel anytime by signing out and clearing your data. You can always sign back in to start fresh.';
-
   return (
     <div className="space-y-6">
       <div className="bg-white border border-penda-border rounded-soft shadow-sm p-6">
@@ -88,6 +83,20 @@ export const MyAccount: React.FC<MyAccountProps> = ({
             <p className="text-sm uppercase tracking-[0.25em] text-penda-light">My Account</p>
             <h2 className="text-2xl font-bold text-penda-purple">{formState.displayName}</h2>
             <p className="text-sm text-penda-text/80">Member since {memberSince}</p>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <button
+                onClick={onToggleAuth}
+                className="inline-flex items-center gap-2 bg-white text-penda-purple border border-penda-border px-3 py-2 rounded-firm text-sm font-semibold hover:bg-penda-bg"
+              >
+                <LogOut size={16} /> {user.isLoggedIn ? 'Sign Out' : 'Sign In'}
+              </button>
+              <button
+                onClick={onResetAccount}
+                className="inline-flex items-center gap-2 bg-penda-purple text-white px-3 py-2 rounded-firm text-sm font-semibold hover:bg-penda-light"
+              >
+                Clear my data
+              </button>
+            </div>
           </div>
         </div>
 
@@ -245,48 +254,6 @@ export const MyAccount: React.FC<MyAccountProps> = ({
             </div>
           </div>
         ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white border border-penda-border rounded-soft p-5 shadow-sm space-y-2">
-          <p className="text-xs uppercase tracking-[0.2em] text-penda-light">About</p>
-          <h3 className="text-lg font-bold text-penda-purple">About My Recovery Buddy</h3>
-          <p className="text-sm text-penda-text/80">
-            My Recovery Buddy is a stand-alone experience by Penda Lane Behavioral Health. Everything you see here lives inside
-            the app—no WordPress pages required.
-          </p>
-          <p className="text-sm text-penda-text/80">
-            Manage your profile, safety preferences, and recovery tools from one place. Data syncs to Vercel so you can pick up
-            where you left off.
-          </p>
-        </div>
-
-        <div className="bg-white border border-penda-border rounded-soft p-5 shadow-sm space-y-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-penda-light">Access</p>
-          <h3 className="text-lg font-bold text-penda-purple">Account access & sign-in</h3>
-          <p className="text-sm text-penda-text/80">
-            Use the button below to {user.isLoggedIn ? 'sign out of' : 'sign in to'} your session. You can also reset your data
-            if you want a clean slate.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <button
-              onClick={onToggleAuth}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-penda-purple text-white py-3 rounded-firm font-semibold shadow-md hover:shadow-lg transition-all"
-            >
-              {authCtaLabel}
-            </button>
-            <button
-              onClick={onResetAccount}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-white text-penda-purple border border-penda-border py-3 rounded-firm font-semibold hover:bg-penda-bg"
-            >
-              Clear my data
-            </button>
-          </div>
-          <div className="p-3 rounded-soft bg-penda-bg border border-penda-border text-sm text-penda-text/80">
-            <p className="font-semibold text-penda-purple mb-1">Need to cancel?</p>
-            <p>{cancelCopy}</p>
-          </div>
-        </div>
       </div>
     </div>
   );

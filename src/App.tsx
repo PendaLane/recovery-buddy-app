@@ -14,6 +14,8 @@ import { PhoneBook } from './components/PhoneBook';
 import { MyAccount } from './components/MyAccount';
 import { FindTreatment } from './components/FindTreatment';
 import { SignUp } from './components/SignUp';
+import { SignIn } from './components/SignIn';
+import { About } from './components/About';
 import { createDefaultState, fetchState, PersistedState, saveState } from './services/stateService';
 
 const getOrCreateClientId = () => {
@@ -226,6 +228,16 @@ const App: React.FC = () => {
     setCurrentView(View.MY_ACCOUNT);
   };
 
+  const handleSignInSubmit = (profile: Partial<UserProfile>) => {
+    setUser((prev) => ({
+      ...prev,
+      ...profile,
+      id: clientId,
+      isLoggedIn: true,
+    }));
+    setCurrentView(View.MY_ACCOUNT);
+  };
+
   const resetAccount = () => {
     const defaults = createDefaultState(clientId);
     setUser(defaults.user);
@@ -278,6 +290,10 @@ const App: React.FC = () => {
         );
       case View.SIGN_UP:
         return <SignUp user={user} onSubmit={handleSignUpSubmit} />;
+      case View.SIGN_IN:
+        return <SignIn user={user} onSubmit={handleSignInSubmit} />;
+      case View.ABOUT:
+        return <About />;
       case View.HELP:
         return (
           <div className="space-y-4">
@@ -324,6 +340,10 @@ const App: React.FC = () => {
     }
   };
 
+  const tagline = 'Meetings. Sponsor. Support. In your pocket.';
+  const isDashboard = currentView === View.DASHBOARD;
+  const headerTitle = isDashboard ? 'Welcome to My Recovery Buddy' : 'My Recovery Buddy';
+
   let viewContent: React.ReactNode = null;
   try {
     viewContent = renderView();
@@ -351,7 +371,33 @@ const App: React.FC = () => {
             shareApp={shareApp}
           />
           <div className="flex-1 flex flex-col">
-            <main className="flex-1 p-4 md:p-8 overflow-y-auto">{viewContent}</main>
+            <main className="flex-1 p-4 md:p-8 overflow-y-auto space-y-6">
+              <div className="bg-white border border-penda-border rounded-soft shadow-sm p-6 text-center space-y-3">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-[0.25em] text-penda-light">My Recovery Buddy</p>
+                  <h1 className="text-2xl md:text-3xl font-extrabold text-penda-purple">
+                    {headerTitle}
+                  </h1>
+                  <p className="text-sm text-penda-text/80">{tagline}</p>
+                </div>
+                <div className="flex flex-wrap justify-center gap-3 pt-1">
+                  <button
+                    onClick={() => setCurrentView(View.SIGN_UP)}
+                    className="min-w-[160px] bg-penda-purple text-white px-5 py-2.5 rounded-firm text-sm font-semibold hover:bg-penda-light shadow"
+                  >
+                    Create Account
+                  </button>
+                  <button
+                    onClick={() => setCurrentView(View.SIGN_IN)}
+                    className="min-w-[160px] bg-white text-penda-purple border border-penda-purple px-5 py-2.5 rounded-firm text-sm font-semibold hover:bg-penda-bg"
+                  >
+                    Sign In
+                  </button>
+                </div>
+              </div>
+
+              {viewContent}
+            </main>
             <footer className="border-t border-penda-border bg-white text-xs text-penda-light text-center py-3">
               © My Recovery Buddy by Penda Lane Behavioral Health — All rights reserved.
             </footer>

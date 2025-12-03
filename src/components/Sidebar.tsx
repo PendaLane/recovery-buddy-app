@@ -13,7 +13,8 @@ import {
   LogOut,
   Share2,
   UserRound,
-  Clock3
+  Clock3,
+  Info
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -106,6 +107,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isMobile
         >
            <AlertCircle size={isMobile ? 18 : 20} />
            <span>Help & Crisis</span>
+        </button>
+
+        <button
+          onClick={() => setView(View.ABOUT)}
+          className={isMobile
+             ? "flex flex-col items-center gap-1 min-w-[60px] p-2 rounded-lg text-[10px] whitespace-nowrap text-penda-purple bg-white border border-penda-border"
+             : "flex items-center gap-3 px-4 py-3 rounded-firm mb-2 transition-all font-medium text-sm text-penda-purple hover:bg-white bg-white border border-transparent w-full text-left"}
+        >
+          <Info size={isMobile ? 18 : 20} />
+          <span>About</span>
         </button>
 
         <button

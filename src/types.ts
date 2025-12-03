@@ -102,5 +102,7 @@ export enum View {
   FIND_TREATMENT = 'FIND_TREATMENT',
   HELP = 'HELP',
   SIGN_UP = 'SIGN_UP',
+  SIGN_IN = 'SIGN_IN',
+  ABOUT = 'ABOUT',
   MY_ACCOUNT = 'MY_ACCOUNT'
 }
