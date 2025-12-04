@@ -138,24 +138,6 @@ const App: React.FC = () => {
     return () => window.removeEventListener('beforeunload', handleUnload);
   }, [sessionStartedAt, sessionId, user]);
 
-  useEffect(() => {
-    const handleUnload = () => {
-      if (user.isLoggedIn && sessionStartedAt) {
-        const endedAt = new Date().toISOString();
-        recordSessionAnalytics({
-          sessionId,
-          userId: user.id,
-          startedAt: sessionStartedAt,
-          endedAt,
-          durationMs: new Date(endedAt).getTime() - new Date(sessionStartedAt).getTime(),
-        });
-      }
-    };
-
-    window.addEventListener('beforeunload', handleUnload);
-    return () => window.removeEventListener('beforeunload', handleUnload);
-  }, [sessionStartedAt, sessionId, user]);
-
   const saveStepWork = (work: StepWork) => {
     setStepWorkList((prev) => [...prev, work]);
   };
@@ -237,15 +219,6 @@ const App: React.FC = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  const handleSignInOut = () => {
-    setUser((prev) => ({
-      ...prev,
-      id: clientId,
-      isLoggedIn: !prev.isLoggedIn,
-      joinedAt: prev.joinedAt || new Date().toISOString(),
-    }));
-  };
 
   const handleCreateAccount = () => {
     setCurrentView(View.SIGN_UP);
@@ -425,6 +398,7 @@ const App: React.FC = () => {
           </div>
         </main>
       </div>
+    </div>
   );
 };
 
