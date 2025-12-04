@@ -16,6 +16,7 @@ import { FindTreatment } from './components/FindTreatment';
 import { SignUp } from './components/SignUp';
 import { SignIn } from './components/SignIn';
 import { About } from './components/About';
+import heroLogo from './assets/penda-lane-logo-2025.svg';
 import { createDefaultState, fetchState, PersistedState, saveState } from './services/stateService';
 
 const getOrCreateClientId = () => {
@@ -381,11 +382,14 @@ const App: React.FC = () => {
           <div className="flex-1 flex flex-col">
             <main className="flex-1 p-4 md:p-8 overflow-y-auto space-y-6">
               <div className="bg-white border border-penda-border rounded-soft shadow-sm p-6 text-center space-y-3">
-                <div className="space-y-1">
-                  <h1 className="text-2xl md:text-3xl font-extrabold text-penda-purple">
-                    {headerTitle}
-                  </h1>
-                  <p className="text-sm text-penda-text/80">{tagline}</p>
+                <div className="flex flex-col items-center space-y-2">
+                  <img src={heroLogo} alt="Penda Lane Behavioral Health logo" className="w-16 h-16 object-contain" />
+                  <div className="space-y-1">
+                    <h1 className="text-2xl md:text-3xl font-extrabold text-penda-purple">
+                      {headerTitle}
+                    </h1>
+                    <p className="text-sm text-penda-text/80">{tagline}</p>
+                  </div>
                 </div>
                 <div className="flex flex-wrap justify-center gap-3 pt-1">
                   <button

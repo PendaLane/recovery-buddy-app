@@ -16,6 +16,7 @@ import {
   Clock3,
   Info
 } from 'lucide-react';
+import heroLogo from '../assets/penda-lane-logo-2025.svg';
 
 interface SidebarProps {
   currentView: View;
@@ -43,7 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isMobile
     ? "sticky top-0 left-0 w-full bg-white border-b border-penda-border flex overflow-x-auto p-2 z-40 shadow-sm gap-2"
     : "w-72 bg-penda-bg border-r border-penda-border/80 flex flex-col p-5 h-full shadow-lg shrink-0 overflow-y-auto";
 
-  const heroLogoSrc = "http://pendalane.com/wp-content/uploads/2024/04/cropped-Penda-Lane-Behavioral-Health-Logo.png";
+  const heroLogoSrc = heroLogo;
   const heroTagline = "Meetings. Sponsor. Support. In your pocket.";
 
   return (
@@ -65,7 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isMobile
         const Icon = item.icon;
         
         let buttonClass = isMobile
-          ? "flex flex-col items-center gap-1 min-w-[60px] p-2 rounded-lg text-[10px] whitespace-nowrap"
+          ? "flex flex-col items-center gap-1 min-w-[82px] px-3 py-2 rounded-lg text-[11px] leading-tight text-center whitespace-normal shrink-0"
           : "flex items-center gap-3 px-4 py-3 rounded-firm mb-2 transition-all font-medium text-sm w-full text-left";
 
         if (isActive) {
