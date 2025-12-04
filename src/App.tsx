@@ -138,21 +138,6 @@ const App: React.FC = () => {
     return () => window.removeEventListener('beforeunload', handleUnload);
   }, [sessionStartedAt, sessionId, user]);
 
-  const handleSignOut = () => {
-    if (user.isLoggedIn && sessionStartedAt) {
-      const endedAt = new Date().toISOString();
-      recordSessionAnalytics({
-        sessionId,
-        userId: user.id,
-        startedAt: sessionStartedAt,
-        endedAt,
-        durationMs: new Date(endedAt).getTime() - new Date(sessionStartedAt).getTime(),
-      });
-    }
-    setUser((prev) => ({ ...prev, isLoggedIn: false }));
-    setSessionStartedAt(null);
-  };
-
   useEffect(() => {
     const handleUnload = () => {
       if (user.isLoggedIn && sessionStartedAt) {
@@ -440,7 +425,6 @@ const App: React.FC = () => {
           </div>
         </main>
       </div>
-    </AppErrorBoundary>
   );
 };
 
