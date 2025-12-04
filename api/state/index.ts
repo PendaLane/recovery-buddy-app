@@ -27,11 +27,14 @@ const hasRequiredEnv = () =>
 const hasKvEnv = () => Boolean(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
 
 async function ensureTables() {
-  await sql`CREATE TABLE IF NOT EXISTS ${sql.identifier([STATE_TABLE])} (
-    session_id text PRIMARY KEY,
-    data jsonb NOT NULL,
-    updated_at timestamptz DEFAULT now()
-  );`;
+  // No sql.identifier – use a simple quoted table name instead
+  await sql`
+    CREATE TABLE IF NOT EXISTS "${STATE_TABLE}" (
+      session_id text PRIMARY KEY,
+      data jsonb NOT NULL,
+      updated_at timestamptz DEFAULT now()
+    );
+  `;
 }
 
 async function readEdgeFlags() {
@@ -46,39 +49,54 @@ async function readEdgeFlags() {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const sessionId = (req.query.sessionId as string) || (req.body && (req.body.sessionId as string));
+  const sessionId =
+    (req.query.sessionId as string) || (req.body && (req.body.sessionId as string));
   if (!sessionId) {
     return res.status(400).json({ error: 'sessionId required' });
   }
 
   if (!hasRequiredEnv()) {
-    return res.status(503).json({ error: 'Database unavailable: POSTGRES_URL not configured' });
+    return res
+      .status(503)
+      .json({ error: 'Database unavailable: POSTGRES_URL not configured' });
   }
 
   await ensureTables();
 
   if (req.method === 'GET') {
     try {
+      // Try KV cache first
       if (hasKvEnv()) {
         const cacheKey = `state:${sessionId}`;
         const cached = await kv.get<string>(cacheKey).catch(() => null);
         if (cached) {
           const flags = await readEdgeFlags();
-          return res.status(200).json({ state: JSON.parse(cached) as PersistedState, flags });
+          return res
+            .status(200)
+            .json({ state: JSON.parse(cached) as PersistedState, flags });
         }
       }
 
-      const { rows } = await sql<PersistedState>`SELECT data FROM ${sql.identifier([STATE_TABLE])} WHERE session_id = ${sessionId} LIMIT 1;`;
+      // Type here is { data: PersistedState }
+      const { rows } = await sql<{ data: PersistedState }>`
+        SELECT data
+        FROM "${STATE_TABLE}"
+        WHERE session_id = ${sessionId}
+        LIMIT 1;
+      `;
+
       if (!rows.length) {
         return res.status(200).json({ state: null, flags: await readEdgeFlags() });
       }
 
-      const state = rows[0].data as PersistedState;
+      const state = rows[0].data;
+
       if (hasKvEnv()) {
         await kv
           .set(`state:${sessionId}`, JSON.stringify(state), { ex: CACHE_TTL_SECONDS })
           .catch(() => undefined);
       }
+
       return res.status(200).json({ state, flags: await readEdgeFlags() });
     } catch (err) {
       console.error('State load failed', err);
@@ -93,12 +111,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-      await sql`INSERT INTO ${sql.identifier([STATE_TABLE])} (session_id, data) VALUES (${sessionId}, ${state}) ON CONFLICT (session_id) DO UPDATE SET data = EXCLUDED.data, updated_at = now();`;
+      // JSON.stringify(state) so it’s a Primitive for the driver, then cast to jsonb
+      await sql`
+        INSERT INTO "${STATE_TABLE}" (session_id, data)
+        VALUES (${sessionId}, ${JSON.stringify(state)}::jsonb)
+        ON CONFLICT (session_id)
+        DO UPDATE SET data = EXCLUDED.data, updated_at = now();
+      `;
+
       if (hasKvEnv()) {
         await kv
           .set(`state:${sessionId}`, JSON.stringify(state), { ex: CACHE_TTL_SECONDS })
           .catch(() => undefined);
       }
+
       return res.status(200).json({ ok: true });
     } catch (err) {
       console.error('State save failed', err);
