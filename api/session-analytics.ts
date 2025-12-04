@@ -12,16 +12,18 @@ const hasRequiredEnv = () =>
   );
 
 async function ensureTable() {
-  await sql`CREATE TABLE IF NOT EXISTS ${sql.identifier([ANALYTICS_TABLE])} (
-    id bigserial PRIMARY KEY,
-    session_id text,
-    user_id text,
-    started_at timestamptz,
-    ended_at timestamptz,
-    duration_ms bigint,
-    region text,
-    created_at timestamptz DEFAULT now()
-  );`;
+  await sql`
+    CREATE TABLE IF NOT EXISTS "${ANALYTICS_TABLE}" (
+      id bigserial PRIMARY KEY,
+      session_id text,
+      user_id text,
+      started_at timestamptz,
+      ended_at timestamptz,
+      duration_ms bigint,
+      region text,
+      created_at timestamptz DEFAULT now()
+    );
+  `;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -31,7 +33,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (!hasRequiredEnv()) {
-    return res.status(503).json({ error: 'Database unavailable: POSTGRES_URL not configured' });
+    return res
+      .status(503)
+      .json({ error: 'Database unavailable: POSTGRES_URL not configured' });
   }
 
   const flags = await get<boolean>('analytics_enabled').catch(() => true);
@@ -47,7 +51,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   await ensureTable();
 
   try {
-    await sql`INSERT INTO ${sql.identifier([ANALYTICS_TABLE])} (session_id, user_id, started_at, ended_at, duration_ms, region) VALUES (${sessionId}, ${userId || null}, ${startedAt}, ${endedAt}, ${durationMs}, ${req.headers['x-vercel-ip-country'] || null});`;
+    const regionHeader = req.headers['x-vercel-ip-country'];
+    const region =
+      Array.isArray(regionHeader) ? regionHeader[0] : regionHeader || null;
+
+    await sql`
+      INSERT INTO "${ANALYTICS_TABLE}"
+        (session_id, user_id, started_at, ended_at, duration_ms, region)
+      VALUES
+        (${sessionId}, ${userId || null}, ${startedAt}, ${endedAt}, ${durationMs}, ${region});
+    `;
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('Analytics insert failed', err);
