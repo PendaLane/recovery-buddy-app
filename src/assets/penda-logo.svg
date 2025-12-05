@@ -1,17 +1,11 @@
-<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="500" height="500" viewBox="0 0 500 500">
   <defs>
-    <linearGradient id="pendaGradient" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#f4e8d9" />
-      <stop offset="50%" stop-color="#f0e1cd" />
-      <stop offset="100%" stop-color="#5b3a6f" />
-    </linearGradient>
-    <linearGradient id="pendaInner" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#5b3a6f" />
-      <stop offset="100%" stop-color="#a178a6" />
-    </linearGradient>
+    <clipPath id="a">
+      <rect x="0" y="0" width="500" height="500"/>
+    </clipPath>
   </defs>
-  <rect x="6" y="6" width="168" height="168" rx="32" fill="#fff" stroke="#e5d5c1" stroke-width="12" />
-  <circle cx="90" cy="90" r="62" fill="url(#pendaGradient)" stroke="#5b3a6f" stroke-width="6" />
-  <path d="M64 116C64 95 80 80 96 80C112 80 116 100 116 110C116 124 106 136 92 136C80 136 64 126 64 116Z" fill="#fff" opacity="0.92"/>
-  <path d="M74 55H108C121 55 130 64 130 78C130 96 117 108 100 108H90V130H74V55ZM102 76C106.418 76 110 72.4183 110 68C110 63.5817 106.418 60 102 60H90V76H102Z" fill="#5b3a6f"/>
+  <g clip-path="url(#a)">
+    <rect x="0" y="0" width="500" height="500" fill="#ffffff"/>
+    <image x="0" y="0" width="500" height="500" preserveAspectRatio="xMidYMid meet" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAAAB…[BASE64 DATA CONTINUES]…"/>
+  </g>
 </svg>
