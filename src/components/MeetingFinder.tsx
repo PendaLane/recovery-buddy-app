@@ -5,7 +5,7 @@ export const MeetingFinder: React.FC = () => {
   const [location, setLocation] = useState('');
   const [query, setQuery] = useState('');
 
-  // --- THESE ARE THE MISSING FUNCTIONS YOU NEEDED ---
+  // --- THESE ARE THE MISSING FUNCTIONS WE ADDED ---
   const handleCustomSearch = () => {
     if (!query.trim()) return;
     const loc = (location || "near me").trim();
@@ -14,15 +14,13 @@ export const MeetingFinder: React.FC = () => {
   };
 
   const onCheckIn = () => {
-    // Placeholder logic
     alert("Check-in recorded! (This is a placeholder)");
   };
 
   const onCheckOut = () => {
-     // Placeholder logic
     alert("Check-out recorded!");
   };
-  // --------------------------------------------------
+  // ------------------------------------------------
 
   const meetingPathways = [
     {
@@ -74,7 +72,7 @@ export const MeetingFinder: React.FC = () => {
       heading: 'Active Sober Community',
       description: 'Fitness- and outdoors-focused communities that pair activity with recovery support.',
       items: [
-        { name: 'The Phoenix', url: 'https://thephoenix.org/', blurb: 'Sober active community offering events, classes, and connection.' },
+        { name: 'The Phoenix', url: 'https://thephoenix.org/', blurb: 'Sober active community offering events, classes, and connection.', },
         { name: 'ROCovery Fitness', url: 'https://www.rocoveryfitness.org/', blurb: 'Wellness and peer connection through fitness and outdoor activities.', },
         { name: 'Fit To Recover', url: 'https://www.fit2recover.org/', blurb: 'Community that blends fitness, nutrition, creative arts, and service.', },
       ],
