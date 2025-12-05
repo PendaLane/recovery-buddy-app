@@ -373,11 +373,7 @@ const App: React.FC = () => {
             {/* Header card with Logo */}
             <div className="bg-white border border-penda-border rounded-soft p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-3">
-                <img
-                  src={Logo}
-                  alt="Penda Lane"
-                  className="w-12 h-12 rounded-xl border border-penda-border object-contain"
-                />
+               
                 <div>
                   <h1 className="text-xl font-extrabold text-penda-purple leading-tight">
                     {headerTitle}
