@@ -383,18 +383,16 @@ const App: React.FC = () => {
             )}
 
             {/* Header card - LOGO REMOVED */}
-            <div className="bg-white border border-penda-border rounded-soft p-6 shadow-sm">
-              <div className="flex items-center gap-3 mb-3">
-                <div>
-                  <h1 className="text-xl font-extrabold text-penda-purple leading-tight">
-                    {headerTitle}
-                  </h1>
-                  <p className="text-sm text-penda-light">{headerSubtitle}</p>
-                </div>
+            <div className="bg-white border border-penda-border rounded-soft p-6 shadow-sm text-center">
+              <div className="flex flex-col items-center gap-2 mb-3">
+                <h1 className="text-xl font-extrabold text-penda-purple leading-tight">
+                  {headerTitle}
+                </h1>
+                <p className="text-sm text-penda-light">{headerSubtitle}</p>
               </div>
 
               {!user.isLoggedIn && (
-                <div className="flex flex-wrap gap-3 pt-2">
+                <div className="flex flex-wrap gap-3 pt-2 justify-center">
                   <button
                     onClick={() => handleSignIn('Member')}
                     className="bg-penda-purple text-white px-4 py-2 rounded-firm text-sm font-semibold hover:bg-penda-light transition-colors"

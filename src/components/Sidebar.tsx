@@ -16,7 +16,6 @@ import {
   Clock3,
   Info
 } from 'lucide-react';
-const HERO_LOGO_URL = 'https://drive.google.com/uc?export=view&id=1tCy-EvkV-8FLqdNMUv1joH3yD-b9HABc';
 
 interface SidebarProps {
   currentView: View;
@@ -44,17 +43,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isMobile
     ? "sticky top-0 left-0 w-full bg-white border-b border-penda-border flex overflow-x-auto p-2 z-40 shadow-sm gap-2"
     : "w-72 bg-penda-bg border-r border-penda-border/80 flex flex-col p-5 h-full shadow-lg shrink-0 overflow-y-auto";
 
-  const heroLogoSrc = HERO_LOGO_URL;
-  const heroTagline = "Meetings. Sponsor. Support. In your pocket.";
-
   return (
     <nav className={baseClass}>
       {!isMobile && (
         <div className="mb-8 px-2 flex flex-col items-center text-center gap-2">
-          <div className="w-24 h-24 rounded-[28px] bg-white border-2 border-penda-border shadow-lg flex items-center justify-center overflow-hidden">
-            <img src={Logo} alt="Penda Lane" className="w-full h-full object-contain" />
-          </div>
-          <div className="text-[11px] uppercase tracking-[0.35em] text-penda-purple mt-2">Penda Lane</div>
           <h1 className="font-extrabold text-penda-purple text-xl leading-tight">My Recovery Buddy</h1>
           <p className="text-xs text-penda-text/80">By Penda Lane Behavioral Health</p>
           <p className="text-[11px] text-penda-light">Compassionate support for every step.</p>
