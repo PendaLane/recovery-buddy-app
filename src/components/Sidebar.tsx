@@ -44,9 +44,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isMobile
     ? "sticky top-0 left-0 w-full bg-white border-b border-penda-border flex overflow-x-auto p-2 z-40 shadow-sm gap-2"
     : "w-72 bg-penda-bg border-r border-penda-border/80 flex flex-col p-5 h-full shadow-lg shrink-0 overflow-y-auto";
 
-  const heroLogoSrc = HERO_LOGO_URL;
-  const heroTagline = "Meetings. Sponsor. Support. In your pocket.";
-
   return (
     <nav className={baseClass}>
       {!isMobile && (
