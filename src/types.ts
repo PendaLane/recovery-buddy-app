@@ -56,6 +56,7 @@ export interface MeetingLog {
   timestamp: string;
   location?: string;
   type: 'Check-In' | 'Check-Out';
+  photoDataUrl?: string;
 }
 
 export interface StepWork {

@@ -193,19 +193,19 @@ const App: React.FC = () => {
     });
   };
 
-  const handleCheckIn = (location: string) => {
+  const handleCheckIn = (location: string, photoDataUrl?: string) => {
     const now = new Date();
     setMeetingLogs((prev) => [
-      { id: Date.now().toString(), timestamp: now.toISOString(), type: 'Check-In', location },
+      { id: Date.now().toString(), timestamp: now.toISOString(), type: 'Check-In', location, photoDataUrl },
       ...prev,
     ]);
     updateStreakOnCheckIn(now);
   };
 
-  const handleCheckOut = (location: string) => {
+  const handleCheckOut = (location: string, photoDataUrl?: string) => {
     const now = new Date();
     setMeetingLogs((prev) => [
-      { id: Date.now().toString(), timestamp: now.toISOString(), type: 'Check-Out', location },
+      { id: Date.now().toString(), timestamp: now.toISOString(), type: 'Check-Out', location, photoDataUrl },
       ...prev,
     ]);
   };
@@ -353,7 +353,7 @@ const App: React.FC = () => {
     }
   };
 
-   const headerTitle =
+  const headerTitle =
     currentView === View.DASHBOARD ? 'Welcome to My Recovery Buddy' : 'My Recovery Buddy';
   const headerSubtitle = 'Meetings. Sponsor. Support. In your pocket.';
   const maintenanceMode = flags.maintenanceMode ?? false;
@@ -369,8 +369,8 @@ const App: React.FC = () => {
           onSignOut={handleSignOut}
           shareApp={shareApp}
         />
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-          <div className="max-w-5xl mx-auto space-y-6">
+        <main className="flex-1 p-4 md:p-8 overflow-y-auto text-center">
+          <div className="max-w-4xl mx-auto space-y-6">
             {maintenanceMode && (
               <div className="bg-amber-50 border border-amber-200 text-amber-900 text-sm px-4 py-3 rounded-soft shadow-sm">
                 Live sync is in maintenance. You can keep working and your updates will save when
@@ -388,20 +388,21 @@ const App: React.FC = () => {
                 <h1 className="text-xl font-extrabold text-penda-purple leading-tight">
                   {headerTitle}
                 </h1>
+                <p className="text-xs text-penda-text/80 -mt-2">By Penda Lane Behavioral Health</p>
                 <p className="text-sm text-penda-light">{headerSubtitle}</p>
               </div>
 
               {!user.isLoggedIn && (
-                <div className="flex flex-wrap gap-3 pt-2 justify-center">
+                <div className="flex flex-wrap gap-3 pt-2 justify-center w-full">
                   <button
                     onClick={handleCreateAccount}
-                    className="bg-penda-purple text-white px-4 py-2 rounded-firm text-sm font-semibold hover:bg-penda-light transition-colors"
+                    className="bg-penda-purple text-white px-6 py-3 rounded-firm text-sm font-semibold hover:bg-penda-light transition-colors flex-1 min-w-[140px]"
                   >
                     Create Account
                   </button>
                   <button
                     onClick={handleSignIn}
-                    className="bg-white border border-penda-purple text-penda-purple px-4 py-2 rounded-firm text-sm font-semibold hover:bg-penda-bg"
+                    className="bg-white border border-penda-purple text-penda-purple px-6 py-3 rounded-firm text-sm font-semibold hover:bg-penda-bg flex-1 min-w-[140px]"
                   >
                     Sign In
                   </button>

@@ -29,6 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isMobile
   const menuItems = [
     { id: View.DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
     { id: View.MEETINGS, label: 'Find A Meeting', icon: MapPin },
+    { id: View.MEETING_LOG, label: 'Meeting Log', icon: Clock3 },
     { id: View.JOURNAL, label: 'Journal', icon: BookHeart },
     { id: View.CONTACTS, label: 'Phone Book', icon: Phone },
     { id: View.READINGS, label: 'Daily Readings', icon: BookOpen },
